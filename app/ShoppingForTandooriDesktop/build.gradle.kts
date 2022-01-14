@@ -3,8 +3,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     kotlin("multiplatform")
-    id("org.jetbrains.compose") version "1.0.0"
-    id("org.jetbrains.compose") version "1.0.0"
+    id("org.jetbrains.compose") // version defined in gradle.properties and read via settings.gradle.kts version
 }
 
 group = "biz.wolschon.tandoorishopping"
@@ -26,6 +25,9 @@ kotlin {
                 implementation(project(":ShoppingForTandooriCommon"))
                 implementation(compose.desktop.currentOs)
                 api(compose.preview)
+
+                // https://mvnrepository.com/artifact/commons-logging/commons-logging
+                implementation("commons-logging:commons-logging:1.2")
             }
         }
         val jvmTest by getting {
@@ -45,4 +47,8 @@ compose.desktop {
             packageVersion = "1.0.0"
         }
     }
+}
+
+kotlin.sourceSets.all {
+    //languageSettings.optIn("kotlin.RequiresOptIn")
 }

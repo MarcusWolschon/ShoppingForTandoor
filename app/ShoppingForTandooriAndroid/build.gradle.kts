@@ -7,21 +7,70 @@ plugins {
 group = "biz.wolschon.tandoorishopping"
 version = "1.0"
 
-repositories {
-    jcenter()
-}
 
 dependencies {
     implementation(project(":ShoppingForTandooriCommon"))
-    implementation("androidx.activity:activity-compose:1.3.0")
+
+    val androidxAppcompatVersion: String by project
+    implementation("androidx.appcompat:appcompat:$androidxAppcompatVersion")
+    val androidxCoreVersion: String by project
+    implementation("androidx.core:core-ktx:$androidxCoreVersion")
+    val navigationComposeVersion: String by project
+    implementation("androidx.navigation:navigation-compose:$navigationComposeVersion")
+    implementation(compose.runtime)
+    implementation(compose.foundation)
+    implementation(compose.material)
+    implementation(compose.ui)
+
+    //https://developer.android.com/jetpack/androidx/releases/activity
+    implementation("androidx.activity:activity-compose:1.4.0")
+
+    // Bugfix "Can only use lower 16 bits for requestCode"
+    implementation("androidx.activity:activity-ktx:1.4.0")
+    implementation("androidx.fragment:fragment-ktx:1.4.0")
 }
 
+// region Helper functions
+
+// sadly functions can not be included via apply { from("../common_functions.gradle.kts") }
+/**
+ * Get property from gradle.properties
+ */
+fun getRootProperty(prop: String) = rootProject.ext.get(prop) as String
+
+/**
+ * Get property from gradle.properties
+ */
+fun getRootProperty(prop: String) = Integer.parseInt(rootProject.ext.get(prop).toString())
+
+/**
+ * Get property from gradle.properties or default
+ */
+fun getSafeRootProperty(prop: String, fallback: String) =
+    if (rootProject.ext.has(prop)) {
+        rootProject.ext.get(prop).toString()
+    } else {
+        fallback
+    }
+
+/**
+ * Get property from gradle.properties or default
+ */
+fun getSafeRootProperty(prop: String, fallback: Int) =
+    if (rootProject.ext.has(prop)) {
+        Integer.parseInt(rootProject.ext.get(prop).toString())
+    } else {
+        fallback
+    }
+// endregion
+
 android {
-    compileSdkVersion(31)
+    compileSdk = getSafeRootProperty("compileSdk", 31)
+    buildToolsVersion =  getSafeRootProperty("buildToolsVersion", "31.0.0")
     defaultConfig {
-        applicationId = "biz.wolschon.tandoorishopping.ShoppingForTandooriAndroid"
-        minSdkVersion(24)
-        targetSdkVersion(31)
+        applicationId = "biz.wolschon.tandoorishopping.android"
+        minSdk = getSafeRootProperty("minSdk", 26)
+        targetSdk =  getSafeRootProperty("targetSdk", 30)
         versionCode = 1
         versionName = "1.0"
     }
@@ -29,9 +78,19 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+    //lint {
+    //    isIgnoreTestSources = true
+    //}
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
         }
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("debug")
+        }
     }
+}
+
+kotlin.sourceSets.all {
+    languageSettings.optIn("kotlin.RequiresOptIn")
 }
