@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Button
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,6 +16,8 @@ import biz.wolschon.tandoorishopping.common.api.model.TandoorFood.SortById
 import biz.wolschon.tandoorishopping.common.api.model.TandoorFood.SortByCategory
 import biz.wolschon.tandoorishopping.common.api.model.TandoorFood.SortByName
 import biz.wolschon.tandoorishopping.common.api.model.TandoorSupermarketCategory
+import java.util.*
+import kotlin.Comparator
 
 @Composable
 fun foodListView(
@@ -25,6 +28,7 @@ fun foodListView(
 
     // state to be remembered
 
+    var sarchFor by remember { mutableStateOf("") }
     var lastSorting by remember { mutableStateOf<Comparator<TandoorFood>>(SortByCategory()) }
 
     // common layout data
@@ -106,17 +110,30 @@ fun foodListView(
 
     // prepare the data to be shown
 
-    val items: List<TandoorFood> = foods.sortedWith(lastSorting)
+    val locale = Locale.getDefault()
+    val searchTemp = sarchFor.lowercase(locale)
+
+    val items: List<TandoorFood> = foods
+        .filter { it.name.lowercase(locale).contains(searchTemp) }
+        .sortedWith(lastSorting)
 
     // compose the UI elements
 
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
-        items(items.size + 1) { index ->
+        items(items.size + 2) { index ->
             when (index) {
-                0 -> foodListItemHeader()
+                0 -> {
+                    TextField(
+                        value = sarchFor,
+                        label = { Text("Search") },
+                        onValueChange = { sarchFor = it },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                1 -> foodListItemHeader()
                 else -> {
-                    val item = items[index - 1]
-                    if (index == 1 || items[index - 2].safeCategoryId != item.safeCategoryId) {
+                    val item = items[index - 2]
+                    if (index == 2 || items[index - 3].safeCategoryId != item.safeCategoryId) {
                         item.supermarket_category?.let { foodListCategory(it) }
                     }
                     foodListItemView(item, onFoodSelected)
