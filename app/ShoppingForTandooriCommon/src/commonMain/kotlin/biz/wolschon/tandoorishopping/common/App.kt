@@ -12,12 +12,15 @@ import androidx.compose.ui.Modifier
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingList
 import biz.wolschon.tandoorishopping.common.model.Model
 import biz.wolschon.tandoorishopping.common.view.shoppingListList
+import biz.wolschon.tandoorishopping.common.view.shoppingListView
 import kotlinx.coroutines.launch
 
 @Composable
 fun App(model: Model) {
     var showFinished by remember { mutableStateOf(false) }
-    var shoppingList by remember { mutableStateOf<List<TandoorShoppingList>?>(null) }
+    var showChecked by remember { mutableStateOf(false) }
+    var currentShoppingList by remember { mutableStateOf<TandoorShoppingList?>(null) }
+    var allShoppingLists by remember { mutableStateOf<List<TandoorShoppingList>?>(null) }
     val apiUrlState = model.apiUrlLive.collectAsState(initial = Model.defaultApiURL)
     val apiTokenState = model.apiTokenLive.collectAsState(initial = Model.defaultApiURL)
     val scope = rememberCoroutineScope()
@@ -42,18 +45,26 @@ fun App(model: Model) {
 
         Button(onClick = {
             scope.launch(NetworkDispatcher) {
-                model.fetchShoppingLists()?.let { list -> shoppingList = list }
+                model.fetchShoppingLists()?.let { list -> allShoppingLists = list }
             }
         }) {
             Text("fetch shopping lists")
         }
 
-        shoppingList?.let {
+        allShoppingLists?.let {
             Row {
                 Checkbox(checked = showFinished, onCheckedChange = {checked -> showFinished = checked})
                 Text("show finished lists", Modifier.align(CenterVertically))
             }
-            shoppingListList(it, showFinished)
+            shoppingListList(it, showFinished) { shoppingList -> currentShoppingList = shoppingList}
+        }
+
+        currentShoppingList?.let {
+            Row {
+                Checkbox(checked = showChecked, onCheckedChange = {checked -> showChecked = checked})
+                Text("show checked foodss", Modifier.align(CenterVertically))
+            }
+            shoppingListView(it, showFinished)
         }
     }
 }

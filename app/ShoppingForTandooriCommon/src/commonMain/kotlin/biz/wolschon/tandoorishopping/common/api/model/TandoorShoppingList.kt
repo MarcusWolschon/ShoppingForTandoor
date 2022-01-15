@@ -54,4 +54,37 @@ data class TandoorShoppingListEntry (
     val amount: Float,
     val order: Int,
     val checked: Boolean
-)
+) {
+    class SortById(val inverted: Boolean = false) : Comparator<TandoorShoppingListEntry> {
+        override fun compare(a: TandoorShoppingListEntry, b: TandoorShoppingListEntry) =
+            if (inverted) {
+                b.id.compareTo(a.id)
+            } else {
+                a.id.compareTo(b.id)
+            }
+    }
+    class SortByChecked(val inverted: Boolean = false) : Comparator<TandoorShoppingListEntry> {
+        override fun compare(a: TandoorShoppingListEntry, b: TandoorShoppingListEntry) =
+            if (inverted) {
+                b.checked.compareTo(a.checked)
+            } else {
+                a.checked.compareTo(b.checked)
+            }
+    }
+    class SortByCategory(val inverted: Boolean = false) : Comparator<TandoorShoppingListEntry> {
+        override fun compare(a: TandoorShoppingListEntry, b: TandoorShoppingListEntry) =
+            if (inverted) {
+                b.food.supermarket_category.name.compareTo(a.food.supermarket_category.name)
+            } else {
+                a.food.supermarket_category.name.compareTo(b.food.supermarket_category.name)
+            }
+    }
+    class SortByName(val inverted: Boolean = false) : Comparator<TandoorShoppingListEntry> {
+        override fun compare(a: TandoorShoppingListEntry, b: TandoorShoppingListEntry) =
+            if (inverted) {
+                b.food.name.compareTo(a.food.name)
+            } else {
+                a.food.name.compareTo(b.food.name)
+            }
+    }
+}

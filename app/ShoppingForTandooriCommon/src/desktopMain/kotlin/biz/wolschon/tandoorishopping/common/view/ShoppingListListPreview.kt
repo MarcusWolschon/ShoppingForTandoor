@@ -30,5 +30,5 @@ fun shoppingListListPreview() {
             finished = true
         )
     )
-    shoppingListList(shoppingLists, showFinished = true)
+    shoppingListList(shoppingLists, showFinished = true) {}
 }

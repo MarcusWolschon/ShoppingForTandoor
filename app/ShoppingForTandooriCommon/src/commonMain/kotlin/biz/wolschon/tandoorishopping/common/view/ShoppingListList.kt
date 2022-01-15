@@ -1,5 +1,6 @@
 package biz.wolschon.tandoorishopping.common.view
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
@@ -15,7 +16,9 @@ import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingList.SortBy
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingList.SortByNote
 
 @Composable
-fun shoppingListList(shoppingLists: List<TandoorShoppingList>, showFinished: Boolean) {
+fun shoppingListList(shoppingLists: List<TandoorShoppingList>,
+                     showFinished: Boolean,
+                     onClick: (TandoorShoppingList) -> Unit) {
 
     // state to be remembered
 
@@ -68,7 +71,9 @@ fun shoppingListList(shoppingLists: List<TandoorShoppingList>, showFinished: Boo
      */
     @Composable
     fun shoppingListItemView(shoppingList: TandoorShoppingList) {
-        Row(modifier = Modifier.fillMaxWidth()) {
+
+
+        Row(modifier = Modifier.fillMaxWidth().clickable { onClick(shoppingList) }) {
             Text("${shoppingList.id}", idModifier)
             Text(if (shoppingList.finished) "finished" else "open", finishedModifier)
             Text(shoppingList.note ?: "---", noteModifier)
