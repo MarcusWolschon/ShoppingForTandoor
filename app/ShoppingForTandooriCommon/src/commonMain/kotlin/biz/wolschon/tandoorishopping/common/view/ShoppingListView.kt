@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Button
+import androidx.compose.material.Checkbox
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingList
@@ -17,7 +19,9 @@ import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingListEntry.S
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingListEntry
 
 @Composable
-fun shoppingListView(shoppingList: TandoorShoppingList, showFinished: Boolean) {
+fun shoppingListView(shoppingList: TandoorShoppingList,
+                     showFinished: Boolean,
+                     onFoodCheckedChanged: (TandoorShoppingListEntry, Boolean) -> Unit) {
 
     // state to be remembered
 
@@ -54,7 +58,7 @@ fun shoppingListView(shoppingList: TandoorShoppingList, showFinished: Boolean) {
                     SortByChecked()
                 }
             }, checkedModifier) {
-                Text("open")
+                Text("✓")
             }
             Button(onClick = {
                 lastSorting = if ((lastSorting as? SortByCategory)?.inverted == false) {
@@ -81,13 +85,17 @@ fun shoppingListView(shoppingList: TandoorShoppingList, showFinished: Boolean) {
      * Render a row of data
      */
     @Composable
-    fun shoppingListItemView(shoppingListEntry: TandoorShoppingListEntry) {
+    fun shoppingListItemView(foodEntry: TandoorShoppingListEntry,
+                             onFoodCheckedChanged: (TandoorShoppingListEntry, Boolean) -> Unit) {
         Row(modifier = Modifier.fillMaxWidth()) {
-            Text("${shoppingListEntry.id}", idModifier)
-            Text(if (shoppingListEntry.checked) "finished" else "open", checkedModifier)
-            Text(shoppingListEntry.food.supermarket_category.name, categoryModifier)
-            Text(shoppingListEntry.amount.toString(), amountModifier)
-            Text(shoppingListEntry.unit?.name ?: "---", unitModifier)
+            Text("${foodEntry.id}", idModifier)
+            Checkbox(checked = foodEntry.checked,
+                onCheckedChange = { onFoodCheckedChanged(foodEntry, it) },
+                modifier = checkedModifier.align(Alignment.CenterVertically)
+            )
+            Text(foodEntry.food.supermarket_category.name, categoryModifier)
+            Text(foodEntry.amount.toString(), amountModifier)
+            Text(foodEntry.unit?.name ?: "---", unitModifier)
         }
     }
 
@@ -103,7 +111,7 @@ fun shoppingListView(shoppingList: TandoorShoppingList, showFinished: Boolean) {
         items(items.size + 1) { index ->
             when(index) {
                 0 -> shoppingListItemHeader()
-                else -> shoppingListItemView(items[index - 1])
+                else -> shoppingListItemView(items[index - 1], onFoodCheckedChanged)
             }
 
         }

@@ -5,6 +5,7 @@ import biz.wolschon.tandoorishopping.common.DatabaseDriverFactory
 import biz.wolschon.tandoorishopping.common.api.APIClient
 import biz.wolschon.tandoorishopping.common.DBDispatcher
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingList
+import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingListEntry
 import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToOneOrNull
 import kotlinx.coroutines.flow.Flow
@@ -33,5 +34,13 @@ class Model(dbDriver: DatabaseDriverFactory) {
 
     suspend fun fetchShoppingLists(): List<TandoorShoppingList>? {
         return api.fetchShoppingLists(apiUrl ?: return null, apiToken ?: return null)
+    }
+
+    suspend fun updateShoppingListItemChecked(id: Int, checked: Boolean) {
+        return api.updateShoppingListItemChecked(apiUrl ?: return, apiToken ?: return, id, checked)
+    }
+
+    suspend fun updateShoppingListItemChecked(entry: TandoorShoppingListEntry) {
+        return api.updateShoppingListItemChecked(apiUrl ?: return, apiToken ?: return, entry)
     }
 }

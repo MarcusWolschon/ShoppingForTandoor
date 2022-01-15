@@ -64,7 +64,17 @@ fun App(model: Model) {
                 Checkbox(checked = showChecked, onCheckedChange = {checked -> showChecked = checked})
                 Text("show checked foodss", Modifier.align(CenterVertically))
             }
-            shoppingListView(it, showFinished)
+            shoppingListView(it, showChecked) { foodItem, checked ->
+                scope.launch(NetworkDispatcher) {
+                    model.updateShoppingListItemChecked(foodItem.id, checked)
+                    //model.updateShoppingListItemChecked(foodItem.copy(checked = checked))
+                    model.fetchShoppingLists()?.let { list ->
+                        allShoppingLists = list
+                        val oldListId = currentShoppingList?.id
+                        currentShoppingList = list.find { sl -> sl.id == oldListId }
+                    }
+                }
+            }
         }
     }
 }
