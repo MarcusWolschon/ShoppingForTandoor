@@ -1,6 +1,7 @@
 package biz.wolschon.tandoorishopping.common.api.model
 
 import kotlinx.serialization.Serializable
+import java.math.BigDecimal
 
 @Serializable
 data class TandoorShoppingList (
@@ -51,10 +52,13 @@ data class TandoorShoppingListEntry (
     val list_recipe: Int?,
     val food: TandoorFood,
     val unit: TandoorUnit?,
-    val amount: Float,
+    val amount: String,
     val order: Int,
     val checked: Boolean
 ) {
+    val amountBigDecimal
+        get() = BigDecimal(amount)
+
     class SortById(val inverted: Boolean = false) : Comparator<TandoorShoppingListEntry> {
         override fun compare(a: TandoorShoppingListEntry, b: TandoorShoppingListEntry) =
             if (inverted) {

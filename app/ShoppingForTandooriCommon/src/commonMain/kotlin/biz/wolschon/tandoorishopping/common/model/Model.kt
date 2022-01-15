@@ -16,6 +16,8 @@ class Model(dbDriver: DatabaseDriverFactory) {
         const val defaultApiURL = "https://rezepte.SERVER/api"
     }
 
+    val settingsIncomplete
+        get() = apiToken.isNullOrBlank() || apiUrl == defaultApiURL
     private val api = APIClient()
     private val database = AppDatabase(
         dbDriver.createDriver()
@@ -29,7 +31,7 @@ class Model(dbDriver: DatabaseDriverFactory) {
 
     val apiTokenLive: Flow<String> = database.settingsQueries.getSetting("apiToken").asFlow().mapToOneOrNull(context = DBDispatcher).map { it?.value ?: "" }
     var apiToken: String?
-        get() = database.settingsQueries.getSetting("apiToken").executeAsOneOrNull()?.value ?: defaultApiURL
+        get() = database.settingsQueries.getSetting("apiToken").executeAsOneOrNull()?.value
         set(value) = database.settingsQueries.replaceSetting("apiToken", value)
 
     suspend fun fetchShoppingLists(): List<TandoorShoppingList>? {

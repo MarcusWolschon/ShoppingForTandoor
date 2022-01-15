@@ -1,8 +1,6 @@
 package biz.wolschon.tandoorishopping.common.view
 
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
@@ -10,6 +8,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingList
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingListEntry.SortById
@@ -17,10 +16,13 @@ import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingListEntry.S
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingListEntry.SortByCategory
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingListEntry.SortByName
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingListEntry
+import biz.wolschon.tandoorishopping.common.api.model.TandoorSupermarketCategory
+import java.math.BigDecimal
 
 @Composable
 fun shoppingListView(shoppingList: TandoorShoppingList,
                      showFinished: Boolean,
+                     showID: Boolean = false,
                      onFoodCheckedChanged: (TandoorShoppingListEntry, Boolean) -> Unit) {
 
     // state to be remembered
@@ -42,14 +44,16 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
     @Composable
     fun shoppingListItemHeader() {
         Row(modifier = Modifier.fillMaxWidth()) {
-            Button(onClick = {
-                lastSorting = if ((lastSorting as? SortById)?.inverted == false) {
-                    SortById(inverted = true)
-                } else {
-                    SortById()
+            if (showID) {
+                Button(onClick = {
+                    lastSorting = if ((lastSorting as? SortById)?.inverted == false) {
+                        SortById(inverted = true)
+                    } else {
+                        SortById()
+                    }
+                }, idModifier) {
+                    Text("ID")
                 }
-            }, idModifier) {
-                Text("ID")
             }
             Button(onClick = {
                 lastSorting = if ((lastSorting as? SortByChecked)?.inverted == false) {
@@ -81,21 +85,62 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
         }
     }
 
+    fun formatAmount(amount: BigDecimal): String {
+        //val isInteger = amount.stripTrailingZeros().scale() <= 0
+        return amount.stripTrailingZeros().toPlainString()
+    }
+
+    /**
+     * Remder a header for a new category
+     */
+    @Composable
+    fun shoppingListCategory(foodCategory: TandoorSupermarketCategory) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            if (showID) {
+                Spacer(idModifier)
+            }
+            Spacer(checkedModifier)
+            Text(foodCategory.name)
+        }
+    }
+
     /**
      * Render a row of data
      */
     @Composable
-    fun shoppingListItemView(foodEntry: TandoorShoppingListEntry,
-                             onFoodCheckedChanged: (TandoorShoppingListEntry, Boolean) -> Unit) {
+    fun shoppingListItemView(
+        foodEntry: TandoorShoppingListEntry,
+        onFoodCheckedChanged: (TandoorShoppingListEntry, Boolean) -> Unit
+    ) {
         Row(modifier = Modifier.fillMaxWidth()) {
-            Text("${foodEntry.id}", idModifier)
-            Checkbox(checked = foodEntry.checked,
+            if (showID) {
+                Text("${foodEntry.id}", idModifier)
+            }
+            Checkbox(
+                checked = foodEntry.checked,
                 onCheckedChange = { onFoodCheckedChanged(foodEntry, it) },
                 modifier = checkedModifier.align(Alignment.CenterVertically)
             )
-            Text(foodEntry.food.supermarket_category.name, categoryModifier)
-            Text(foodEntry.amount.toString(), amountModifier)
-            Text(foodEntry.unit?.name ?: "---", unitModifier)
+            /*Text(
+                foodEntry.food.supermarket_category.name,
+                categoryModifier.align(Alignment.CenterVertically),
+            )*/
+            Text(
+                formatAmount(foodEntry.amountBigDecimal),
+                amountModifier.align(Alignment.CenterVertically),
+                textAlign = TextAlign.End
+            )
+            Spacer(Modifier.width(1.dp))
+            Text(
+                foodEntry.unit?.name ?: "-",
+                unitModifier.align(Alignment.CenterVertically),
+                textAlign = TextAlign.Start
+            )
+            Text(
+                foodEntry.food.name,
+                nameModifier.align(Alignment.CenterVertically),
+                textAlign = TextAlign.End
+            )
         }
     }
 
@@ -108,10 +153,18 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
     // compose the UI elements
 
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
+        var lastCategory: Int? = null
         items(items.size + 1) { index ->
-            when(index) {
+            when (index) {
                 0 -> shoppingListItemHeader()
-                else -> shoppingListItemView(items[index - 1], onFoodCheckedChanged)
+                else -> {
+                    val item = items[index - 1]
+                    if (lastCategory != item.food.supermarket_category.id) {
+                        shoppingListCategory(item.food.supermarket_category)
+                        lastCategory = item.food.supermarket_category.id
+                    }
+                    shoppingListItemView(item, onFoodCheckedChanged)
+                }
             }
 
         }
