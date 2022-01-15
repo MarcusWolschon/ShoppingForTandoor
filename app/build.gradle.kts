@@ -14,7 +14,7 @@ buildscript {
     }
 }
 
-group = "biz.wolschon.tandoorishopping"
+group = "biz.wolschon.tandoorshopping"
 version = "1.0"
 
 allprojects {

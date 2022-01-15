@@ -26,7 +26,7 @@ pluginManagement {
 rootProject.name = "ShoppingForTandoori"
 
 
-include(":ShoppingForTandooriAndroid")
-include(":ShoppingForTandooriDesktop")
-include(":ShoppingForTandooriCommon")
+include(":ShoppingForTandoorAndroid")
+include(":ShoppingForTandoorDesktop")
+include(":ShoppingForTandoorCommon")
 
