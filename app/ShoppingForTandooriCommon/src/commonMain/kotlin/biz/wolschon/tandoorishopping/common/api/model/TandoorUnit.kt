@@ -3,9 +3,8 @@ package biz.wolschon.tandoorishopping.common.api.model
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class TandooriShoppingList (
+data class TandoorUnit (
     val id: Int,
-    val uuid: String,
-    val note: String?,
-    val finished: Boolean
+    val name: String,
+    val description: String?,
 )

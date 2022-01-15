@@ -10,6 +10,7 @@ plugins {
     //application
     id("com.android.library")
     id("kotlinx-serialization")
+    kotlin("plugin.serialization") // version defined in gradle.properties and read via settings.gradle.kts version
     id("com.squareup.sqldelight")
 }
 

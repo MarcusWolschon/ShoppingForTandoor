@@ -25,10 +25,3 @@ allprojects {
         google()
     }
 }
-
-
-//plugins {
-//    kotlin("jvm") // version defined in gradle.properties and read via settings.gradle.kts version
-//
-//    kotlin("plugin.serialization")// version defined in gradle.properties and read via settings.gradle.kts version
-//}

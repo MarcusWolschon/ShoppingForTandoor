@@ -4,7 +4,7 @@ import biz.wolschon.tandoorishopping.common.model.db.AppDatabase
 import biz.wolschon.tandoorishopping.common.DatabaseDriverFactory
 import biz.wolschon.tandoorishopping.common.api.APIClient
 import biz.wolschon.tandoorishopping.common.DBDispatcher
-import biz.wolschon.tandoorishopping.common.api.model.TandooriShoppingList
+import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingList
 import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToOneOrNull
 import kotlinx.coroutines.flow.Flow
@@ -31,7 +31,7 @@ class Model(dbDriver: DatabaseDriverFactory) {
         get() = database.settingsQueries.getSetting("apiToken").executeAsOneOrNull()?.value ?: defaultApiURL
         set(value) = database.settingsQueries.replaceSetting("apiToken", value)
 
-    suspend fun fetchShoppingLists(): Array<TandooriShoppingList>? {
+    suspend fun fetchShoppingLists(): List<TandoorShoppingList>? {
         return api.fetchShoppingLists(apiUrl ?: return null, apiToken ?: return null)
     }
 }
