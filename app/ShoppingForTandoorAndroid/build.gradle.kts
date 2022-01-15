@@ -69,6 +69,7 @@ android {
     buildToolsVersion =  getSafeRootProperty("buildToolsVersion", "31.0.0")
     defaultConfig {
         applicationId = "biz.wolschon.tandoorshopping.android"
+        //activity = "MainActivity"
         minSdk = getSafeRootProperty("minSdk", 26)
         targetSdk =  getSafeRootProperty("targetSdk", 30)
         versionCode = 1

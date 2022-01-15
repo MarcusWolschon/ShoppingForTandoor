@@ -23,7 +23,7 @@ pluginManagement {
     }
     
 }
-rootProject.name = "ShoppingForTandoori"
+rootProject.name = "ShoppingForTandoor"
 
 
 include(":ShoppingForTandoorAndroid")

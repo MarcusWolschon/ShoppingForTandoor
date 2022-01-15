@@ -44,5 +44,5 @@ actual fun getHttpClient(): HttpClient =
             level = LogLevel.HEADERS
         }
         BrowserUserAgent() // install default browser-like user-agent
-        install(UserAgent) { agent = "Shopping For Tandoori Android app" }
+        install(UserAgent) { agent = "Shopping For Tandoor Android app" }
     }
