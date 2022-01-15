@@ -1,5 +1,6 @@
 package biz.wolschon.tandoorishopping.common.api
 
+import biz.wolschon.tandoorishopping.common.api.model.TandoorPagedFoodList
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingList
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingListEntry
 import io.ktor.client.request.*
@@ -10,13 +11,26 @@ import kotlinx.serialization.Serializable
 
 class APIClient {
 
+    suspend fun fetchFoods(baseurl: String, accessToken: String) =
+        getHttpClient().get<TandoorPagedFoodList> {
+            url("$baseurl/food/")
+            contentType(ContentType.Application.Json)
+            header("Authorization", "Token $accessToken")
+        }
+
+    suspend fun fetchMoreFoods(fullyUrl: String, accessToken: String) =
+        getHttpClient().get<TandoorPagedFoodList> {
+            url(fullyUrl)
+            contentType(ContentType.Application.Json)
+            header("Authorization", "Token $accessToken")
+        }
+
     suspend fun fetchShoppingLists(baseurl: String, accessToken: String) =
         getHttpClient().get<List<TandoorShoppingList>> {
             url("$baseurl/shopping-list/")
             contentType(ContentType.Application.Json)
             header("Authorization", "Token $accessToken")
         }
-
 
     @Serializable
     data class ShoppingListEntryUpdate(val id: Int, val checked: Boolean)

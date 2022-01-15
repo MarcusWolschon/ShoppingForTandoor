@@ -71,8 +71,6 @@ fun shoppingListList(shoppingLists: List<TandoorShoppingList>,
      */
     @Composable
     fun shoppingListItemView(shoppingList: TandoorShoppingList) {
-
-
         Row(modifier = Modifier.fillMaxWidth().clickable { onClick(shoppingList) }) {
             Text("${shoppingList.id}", idModifier)
             Text(if (shoppingList.finished) "finished" else "open", finishedModifier)

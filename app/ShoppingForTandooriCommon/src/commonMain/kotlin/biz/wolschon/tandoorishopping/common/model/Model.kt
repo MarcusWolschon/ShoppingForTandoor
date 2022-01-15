@@ -4,6 +4,7 @@ import biz.wolschon.tandoorishopping.common.model.db.AppDatabase
 import biz.wolschon.tandoorishopping.common.DatabaseDriverFactory
 import biz.wolschon.tandoorishopping.common.api.APIClient
 import biz.wolschon.tandoorishopping.common.DBDispatcher
+import biz.wolschon.tandoorishopping.common.api.model.TandoorFood
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingList
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingListEntry
 import com.squareup.sqldelight.runtime.coroutines.asFlow
@@ -34,6 +35,16 @@ class Model(dbDriver: DatabaseDriverFactory) {
         get() = database.settingsQueries.getSetting("apiToken").executeAsOneOrNull()?.value
         set(value) = database.settingsQueries.replaceSetting("apiToken", value)
 
+    suspend fun fetchFoods(): List<TandoorFood>? {
+        var response = api.fetchFoods(apiUrl ?: return null, apiToken ?: return null)
+        val allFoods = response.results.toMutableList()
+        while (response.next != null) {
+            response = api.fetchMoreFoods(response.next ?: break, apiToken ?: return null)
+            allFoods.addAll(response.results)
+        }
+
+        return allFoods
+    }
     suspend fun fetchShoppingLists(): List<TandoorShoppingList>? {
         return api.fetchShoppingLists(apiUrl ?: return null, apiToken ?: return null)
     }

@@ -1,5 +1,6 @@
 package biz.wolschon.tandoorishopping.common.view
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Button
@@ -8,8 +9,11 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import biz.wolschon.tandoorishopping.common.api.model.TandoorFood
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingList
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingListEntry.SortById
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingListEntry.SortByChecked
@@ -23,7 +27,8 @@ import java.math.BigDecimal
 fun shoppingListView(shoppingList: TandoorShoppingList,
                      showFinished: Boolean,
                      showID: Boolean = false,
-                     onFoodCheckedChanged: (TandoorShoppingListEntry, Boolean) -> Unit) {
+                     onFoodCheckedChanged: (TandoorShoppingListEntry, Boolean) -> Unit,
+                     onFoodSelected: (TandoorFood) -> Unit) {
 
     // state to be remembered
 
@@ -91,7 +96,7 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
     }
 
     /**
-     * Remder a header for a new category
+     * Render a header for a new category
      */
     @Composable
     fun shoppingListCategory(foodCategory: TandoorSupermarketCategory) {
@@ -137,9 +142,13 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
                 textAlign = TextAlign.Start
             )
             Text(
-                foodEntry.food.name,
-                nameModifier.align(Alignment.CenterVertically),
-                textAlign = TextAlign.End
+                text = foodEntry.food.name,
+                modifier = nameModifier
+                    .align(Alignment.CenterVertically)
+                    .clickable { onFoodSelected.invoke(foodEntry.food) },
+                textAlign = TextAlign.End,
+                textDecoration = TextDecoration.Underline,
+                color = Color.Blue
             )
         }
     }
@@ -153,15 +162,13 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
     // compose the UI elements
 
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
-        var lastCategory: Int? = null
         items(items.size + 1) { index ->
             when (index) {
                 0 -> shoppingListItemHeader()
                 else -> {
                     val item = items[index - 1]
-                    if (lastCategory != item.food.supermarket_category.id) {
-                        shoppingListCategory(item.food.supermarket_category)
-                        lastCategory = item.food.supermarket_category.id
+                    if (index == 1 || items[index - 2].food.safeCategoryId != item.food.safeCategoryId) {
+                        item.food.supermarket_category?.let { shoppingListCategory(it) }
                     }
                     shoppingListItemView(item, onFoodCheckedChanged)
                 }

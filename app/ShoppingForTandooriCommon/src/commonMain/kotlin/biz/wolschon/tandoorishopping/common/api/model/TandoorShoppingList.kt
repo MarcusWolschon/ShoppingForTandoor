@@ -18,7 +18,7 @@ data class TandoorShoppingList (
 ) {
 
     val sortedEntries
-        get() = entries.sortedBy { it.food.name }.sortedBy { it.food.supermarket_category.name }
+        get() = entries.sortedBy { it.food.name }.sortedBy { it.food.safeCategoryName }
 
     class SortById(val inverted: Boolean = false) : Comparator<TandoorShoppingList> {
         override fun compare(a: TandoorShoppingList, b: TandoorShoppingList) =
@@ -67,6 +67,7 @@ data class TandoorShoppingListEntry (
                 a.id.compareTo(b.id)
             }
     }
+
     class SortByChecked(val inverted: Boolean = false) : Comparator<TandoorShoppingListEntry> {
         override fun compare(a: TandoorShoppingListEntry, b: TandoorShoppingListEntry) =
             if (inverted) {
@@ -75,14 +76,16 @@ data class TandoorShoppingListEntry (
                 a.checked.compareTo(b.checked)
             }
     }
+
     class SortByCategory(val inverted: Boolean = false) : Comparator<TandoorShoppingListEntry> {
         override fun compare(a: TandoorShoppingListEntry, b: TandoorShoppingListEntry) =
             if (inverted) {
-                b.food.supermarket_category.name.compareTo(a.food.supermarket_category.name)
+                b.food.safeCategoryName.compareTo(a.food.safeCategoryName)
             } else {
-                a.food.supermarket_category.name.compareTo(b.food.supermarket_category.name)
+                a.food.safeCategoryName.compareTo(b.food.safeCategoryName)
             }
     }
+
     class SortByName(val inverted: Boolean = false) : Comparator<TandoorShoppingListEntry> {
         override fun compare(a: TandoorShoppingListEntry, b: TandoorShoppingListEntry) =
             if (inverted) {

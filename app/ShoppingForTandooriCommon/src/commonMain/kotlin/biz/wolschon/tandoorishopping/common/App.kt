@@ -12,15 +12,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
+import biz.wolschon.tandoorishopping.common.api.model.TandoorFood
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingList
 import biz.wolschon.tandoorishopping.common.api.model.TandoorShoppingListEntry
 import biz.wolschon.tandoorishopping.common.model.Model
-import biz.wolschon.tandoorishopping.common.view.SettingsPage
-import biz.wolschon.tandoorishopping.common.view.shoppingListList
-import biz.wolschon.tandoorishopping.common.view.shoppingListView
+import biz.wolschon.tandoorishopping.common.view.*
 import kotlinx.coroutines.launch
 
-private enum class Pages { LISTS, LIST, SETTINGS }
+private enum class Pages { LISTS, LIST, FOODS, FOOD, SETTINGS }
 
 @Composable
 fun App(model: Model) {
@@ -29,18 +28,23 @@ fun App(model: Model) {
     var showFinished by remember { mutableStateOf(false) }
     var showChecked by remember { mutableStateOf(false) }
     var currentShoppingList by remember { mutableStateOf<TandoorShoppingList?>(null) }
+    var currentFood by remember { mutableStateOf<TandoorFood?>(null) }
     var allShoppingLists by remember { mutableStateOf<List<TandoorShoppingList>?>(null) }
+    var allFoods by remember { mutableStateOf<List<TandoorFood>?>(null) }
     val scope = rememberCoroutineScope()
 
     // pages
 
-    if (model.settingsIncomplete) {
-        pageToShow = Pages.SETTINGS
-    } else if (allShoppingLists == null) {
+    val refresh = {
         scope.launch(NetworkDispatcher) {
             model.fetchShoppingLists()?.let { list -> allShoppingLists = list }
+            model.fetchFoods()?.let { list -> allFoods = list }
         }
     }
+
+    if (model.settingsIncomplete) {
+        pageToShow = Pages.SETTINGS
+    } else if (allShoppingLists == null) { refresh.invoke() }
     if (pageToShow == Pages.LIST && currentShoppingList == null) {
         pageToShow = Pages.LISTS
     }
@@ -62,11 +66,7 @@ fun App(model: Model) {
         Row {
             Button(
                 enabled = !model.settingsIncomplete,
-                onClick = {
-                    scope.launch(NetworkDispatcher) {
-                        model.fetchShoppingLists()?.let { list -> allShoppingLists = list }
-                    }
-                }) {
+                onClick = { refresh.invoke() }) {
                 Text("\uD83D\uDDD8")
             }
 
@@ -74,6 +74,12 @@ fun App(model: Model) {
                 enabled = pageToShow != Pages.LISTS && allShoppingLists != null,
                 onClick = { pageToShow = Pages.LISTS }) {
                 Text("shopping lists")
+            }
+
+            Button(
+                enabled = pageToShow != Pages.FOODS && allFoods != null,
+                onClick = { pageToShow = Pages.FOODS }) {
+                Text("foods")
             }
 
             Spacer(Modifier.fillMaxWidth().weight(2f))
@@ -116,7 +122,36 @@ fun App(model: Model) {
                     Checkbox(checked = showChecked, onCheckedChange = { checked -> showChecked = checked })
                     Text("show checked foods", Modifier.align(CenterVertically))
                 }
-                shoppingListView(it, showChecked) { foodItem, checked -> updateFoodEntry(foodItem, checked) }
+                shoppingListView(
+                    it,
+                    showChecked,
+                    onFoodCheckedChanged =  { foodItem, checked -> updateFoodEntry(foodItem, checked) },
+                    onFoodSelected = { food ->
+                        currentFood = food
+                        pageToShow = Pages.FOOD
+                    }
+                )
+            }
+
+            Pages.FOODS -> allFoods?.let {
+                Text(
+                    "All foods:",
+                    fontSize = 20.sp,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                foodListView(it, showFinished) { food ->
+                    currentFood = food
+                    pageToShow = Pages.FOOD
+                }
+            }
+
+            Pages.FOOD -> currentFood?.let {
+                Text(
+                    "selected food:",
+                    fontSize = 20.sp,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                foodDetailsView(it)
             }
         }
     }
