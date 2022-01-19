@@ -1,5 +1,6 @@
 package biz.wolschon.tandoorshopping.common
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
 import biz.wolschon.tandoorshopping.common.api.model.TandoorFood
 import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingList
@@ -27,6 +29,7 @@ private enum class Pages { LISTS, LIST, FOODS, FOOD, SETTINGS }
 @Composable
 fun App(model: Model) {
     // state
+    val errorMessage = model.errorMessage.collectAsState()
     var pageToShow by remember { mutableStateOf(Pages.LISTS) }
     var showFinished by remember { mutableStateOf(false) }
     var showChecked by remember { mutableStateOf(false) }
@@ -58,7 +61,10 @@ fun App(model: Model) {
 
     if (model.settingsIncomplete) {
         pageToShow = Pages.SETTINGS
-    } else if (allShoppingLists == null) { refresh.invoke() }
+    } else if (allShoppingLists == null && errorMessage.value == null) {
+        refresh.invoke()
+    }
+
     if (pageToShow == Pages.LIST && currentShoppingList == null) {
         pageToShow = Pages.LISTS
     }
@@ -108,6 +114,12 @@ fun App(model: Model) {
                 modifier = Modifier.weight(1f)
             ) {
                 Text("⚙")
+            }
+        }
+
+        errorMessage.value?.let { error ->
+            Row(Modifier.background(Color.Red).fillMaxWidth()) {
+                Text(text = error, color = Color.White)
             }
         }
 

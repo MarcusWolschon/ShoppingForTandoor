@@ -34,4 +34,4 @@ app/.idea/deploymentTargetDropDown.xml
 app/local.properties
 keys/ShoppingForTandoor_Keystore.jks
 keys/export/private_key.pepk
-
+PlayStore/*

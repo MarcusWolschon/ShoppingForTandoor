@@ -59,6 +59,9 @@ kotlin {
         linkSqlite = true
     }
     sourceSets {
+        all {
+            languageSettings.optIn("kotlin.RequiresOptIn")
+        }
         val commonMain by getting {
             dependencies {
                 api(compose.runtime)
@@ -109,7 +112,7 @@ kotlin {
         }
         val androidTest by getting {
             dependencies {
-                implementation("junit:junit:4.13")
+                implementation("junit:junit:4.13.2")
             }
         }
         val desktopMain by getting {
@@ -188,4 +191,10 @@ android {
 
 //application {
 //    mainClass.set("MainKt")
+//}
+
+//tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).all {
+//    kotlinOptions {
+//        freeCompilerArgs = freeCompilerArgs + "-Xopt-in=kotlin.RequiresOptIn"
+//    }
 //}
