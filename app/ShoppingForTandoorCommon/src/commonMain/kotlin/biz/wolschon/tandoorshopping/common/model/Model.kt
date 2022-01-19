@@ -27,7 +27,7 @@ class Model(dbDriver: DatabaseDriverFactory) {
 
     val apiUrlLive: Flow<String> = database.settingsQueries.getSetting("apiUrl").asFlow().mapToOneOrNull(context = DBDispatcher).map { it?.value ?: defaultApiURL }
     var apiUrl: String?
-        get() = database.settingsQueries.getSetting("apiUrl").executeAsOneOrNull()?.value ?: defaultApiURL
+        get() = database.settingsQueries.getSetting("apiUrl").executeAsOneOrNull()?.value?.trim() ?: defaultApiURL
         set(value) = database.settingsQueries.replaceSetting("apiUrl", value)
 
     val apiTokenLive: Flow<String> = database.settingsQueries.getSetting("apiToken").asFlow().mapToOneOrNull(context = DBDispatcher).map { it?.value ?: "" }

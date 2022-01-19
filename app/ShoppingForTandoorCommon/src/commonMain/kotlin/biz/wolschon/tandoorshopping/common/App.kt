@@ -17,7 +17,10 @@ import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingList
 import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry
 import biz.wolschon.tandoorshopping.common.model.Model
 import biz.wolschon.tandoorshopping.common.view.*
+import io.ktor.client.features.*
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
+import java.nio.channels.UnresolvedAddressException
 
 private enum class Pages { LISTS, LIST, FOODS, FOOD, SETTINGS }
 
@@ -34,9 +37,20 @@ fun App(model: Model) {
     val scope = rememberCoroutineScope()
 
     // pages
+    Log.d("App", "App recomposing pageToShow=$pageToShow")
+
+    val errorHandler = CoroutineExceptionHandler { _, throwable ->
+        Log.e("App", "NetworkDispatcher got", throwable)
+        if (throwable is UnresolvedAddressException) {
+            model.apiUrl = null
+        }
+        if (throwable is ClientRequestException) {
+            model.apiToken = null
+        }
+    }
 
     val refresh = {
-        scope.launch(NetworkDispatcher) {
+        scope.launch(NetworkDispatcher + errorHandler) {
             model.fetchShoppingLists()?.let { list -> allShoppingLists = list }
             model.fetchFoods()?.let { list -> allFoods = list }
         }
@@ -86,7 +100,11 @@ fun App(model: Model) {
 
             Button(
                 //always enabled //enabled = pageToShow != Pages.SETTINGS,
-                onClick = { pageToShow = if (pageToShow == Pages.SETTINGS) Pages.LISTS else Pages.SETTINGS },
+                onClick = {
+
+                    Log.d("App", "settings clicked")
+                    pageToShow = if (pageToShow == Pages.SETTINGS) Pages.LISTS else Pages.SETTINGS
+                },
                 modifier = Modifier.weight(1f)
             ) {
                 Text("⚙")
