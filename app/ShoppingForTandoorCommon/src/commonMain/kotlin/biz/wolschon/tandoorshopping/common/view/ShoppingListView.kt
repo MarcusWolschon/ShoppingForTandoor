@@ -1,5 +1,6 @@
 package biz.wolschon.tandoorshopping.common.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,14 +14,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import biz.wolschon.tandoorshopping.common.api.model.TandoorFood
-import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingList
+import biz.wolschon.tandoorshopping.common.api.model.*
 import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry.SortById
 import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry.SortByChecked
 import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry.SortByCategory
 import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry.SortByName
-import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry
-import biz.wolschon.tandoorshopping.common.api.model.TandoorSupermarketCategory
+import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry.SortByRecipe
 import java.math.BigDecimal
 
 @Composable
@@ -32,7 +31,7 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
 
     // state to be remembered
 
-    var lastSorting by remember { mutableStateOf<Comparator<TandoorShoppingListEntry>>(SortById()) }
+    var lastSorting by remember { mutableStateOf<Comparator<TandoorShoppingListEntry>>(SortByRecipe()) }
 
     // common layout data
 
@@ -42,6 +41,7 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
     val amountModifier = Modifier.width(32.dp)
     val unitModifier = Modifier.width(48.dp)
     val nameModifier = Modifier.fillMaxWidth()
+    val receiptModifier = Modifier.width(100.dp)
 
     /**
      * Render item headers with buttons for sorting
@@ -79,6 +79,15 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
                 Text("category")
             }
             Button(onClick = {
+                lastSorting = if ((lastSorting as? SortByRecipe)?.inverted == false) {
+                    SortByRecipe(inverted = true)
+                } else {
+                    SortByRecipe()
+                }
+            }, receiptModifier) {
+                Text("recipe")
+            }
+            Button(onClick = {
                 lastSorting = if ((lastSorting as? SortByName)?.inverted == false) {
                     SortByName(inverted = true)
                 } else {
@@ -93,6 +102,19 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
     fun formatAmount(amount: BigDecimal): String {
         //val isInteger = amount.stripTrailingZeros().scale() <= 0
         return amount.stripTrailingZeros().toPlainString()
+    }
+
+    /**
+     * Render a header for a new category
+     */
+    @Composable
+    fun shoppingListRecipe(recipeId: Int?, recipe: TandoorRecipe?) {
+        Row(modifier = Modifier.fillMaxWidth().background(Color.LightGray)) {
+            Text(
+                text = recipe?.name ?: "Recipe #$recipeId",
+                textAlign = TextAlign.Center
+            )
+        }
     }
 
     /**
@@ -167,6 +189,11 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
                 0 -> shoppingListItemHeader()
                 else -> {
                     val item = items[index - 1]
+                    if (lastSorting is SortByRecipe) {
+                        if (index == 1 || items[index - 2].list_recipe != item.list_recipe) {
+                            shoppingListRecipe(item.list_recipe, item.recipe)
+                        }
+                    }
                     if (index == 1 || items[index - 2].food.safeCategoryId != item.food.safeCategoryId) {
                         item.food.supermarket_category?.let { shoppingListCategory(it) }
                     }

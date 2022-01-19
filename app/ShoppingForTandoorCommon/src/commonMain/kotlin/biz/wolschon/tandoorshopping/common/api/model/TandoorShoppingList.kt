@@ -1,6 +1,7 @@
 package biz.wolschon.tandoorshopping.common.api.model
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import java.math.BigDecimal
 
 @Serializable
@@ -50,6 +51,8 @@ data class TandoorShoppingList (
 data class TandoorShoppingListEntry (
     val id: Int,
     val list_recipe: Int?,
+    @Transient
+    var recipe: TandoorRecipe? = null,
     val food: TandoorFood,
     val unit: TandoorUnit?,
     val amount: String,
@@ -92,6 +95,15 @@ data class TandoorShoppingListEntry (
                 b.food.name.compareTo(a.food.name)
             } else {
                 a.food.name.compareTo(b.food.name)
+            }
+    }
+
+    class SortByRecipe(val inverted: Boolean = false) : Comparator<TandoorShoppingListEntry> {
+        override fun compare(a: TandoorShoppingListEntry, b: TandoorShoppingListEntry) =
+            if (inverted) {
+                (b.list_recipe ?: -1).compareTo(a.list_recipe ?: -1)
+            } else {
+                (a.list_recipe ?: -1).compareTo(b.list_recipe ?: -1)
             }
     }
 }

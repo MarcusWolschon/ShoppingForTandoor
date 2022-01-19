@@ -27,7 +27,7 @@ fun shoppingListList(shoppingLists: List<TandoorShoppingList>,
     // common layout data
 
     val idModifier = Modifier.width(48.dp)
-    val finishedModifier = Modifier.width(100.dp)
+    val finishedModifier = Modifier.width(105.dp)
     val noteModifier = Modifier.fillMaxWidth()
 
     /**

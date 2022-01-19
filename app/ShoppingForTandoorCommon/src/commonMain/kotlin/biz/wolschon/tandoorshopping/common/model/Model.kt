@@ -5,10 +5,7 @@ import biz.wolschon.tandoorshopping.common.DatabaseDriverFactory
 import biz.wolschon.tandoorshopping.common.api.APIClient
 import biz.wolschon.tandoorshopping.common.DBDispatcher
 import biz.wolschon.tandoorshopping.common.Log
-import biz.wolschon.tandoorshopping.common.api.model.TandoorError
-import biz.wolschon.tandoorshopping.common.api.model.TandoorFood
-import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingList
-import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry
+import biz.wolschon.tandoorshopping.common.api.model.*
 import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToOneOrNull
 import io.ktor.client.features.*
@@ -101,11 +98,48 @@ class Model(dbDriver: DatabaseDriverFactory) {
         }
     }
 
-    suspend fun fetchShoppingLists(): List<TandoorShoppingList>? {
+    private val cachedRecipes = mutableMapOf<Int, TandoorRecipe>()
+    private suspend fun fetchRecipe(recipeId: Int, cached: Boolean): TandoorRecipe? {
+        if (cached) {
+            cachedRecipes[recipeId]?.let { return it }
+        }
         val apiUrl = apiUrl ?: return null
         val apiToken = apiToken ?: return null
         try {
-            return coroutineScope { api.fetchShoppingLists(apiUrl, apiToken) }
+            return coroutineScope {
+                Log.e("Model", "fetchRecipe() calling api")
+                api.fetchRecipe(apiUrl, apiToken, recipeId).also {
+                    cachedRecipes[recipeId] = it
+                }
+            }
+        } catch (x: UnresolvedAddressException) {
+            Log.e("Model", "fetchRecipe() error", x)
+            errorMessage.value = "Server address unresolvable"
+        } catch (x: ClientRequestException) {
+            Log.e("Model", "fetchRecipe() error", x)
+            handleClientRequestException(x)
+        }
+        return null
+    }
+
+    suspend fun fetchShoppingLists(): List<TandoorShoppingList>? {
+        Log.e("Model", "fetchShoppingLists() entered")
+        val apiUrl = apiUrl ?: return null
+        val apiToken = apiToken ?: return null
+        Log.e("Model", "fetchShoppingLists() starting")
+        try {
+            return coroutineScope {
+                Log.e("Model", "fetchShoppingLists() calling api")
+                api.fetchShoppingLists(apiUrl, apiToken).also { list ->
+                    list.forEach {
+                        it.entries.forEach { entry ->
+                            entry.list_recipe?.let { recipeId ->
+                                entry.recipe = fetchRecipe(recipeId, true)
+                            }
+                        }
+                    }
+                }
+            }
         } catch (x: UnresolvedAddressException) {
             Log.e("Model", "fetchShoppingLists() error", x)
             errorMessage.value = "Server address unresolvable"

@@ -54,14 +54,25 @@ fun App(model: Model) {
 
     val refresh = {
         scope.launch(NetworkDispatcher + errorHandler) {
-            model.fetchShoppingLists()?.let { list -> allShoppingLists = list }
-            model.fetchFoods()?.let { list -> allFoods = list }
+            Log.i("App", "refresh starting")
+            model.fetchShoppingLists()?.let { list ->
+                Log.i("App", "refresh - fetchShoppingLists done")
+                allShoppingLists = list
+            }
+            Log.i("App", "refresh - fetchFoods starting")
+            model.fetchFoods()?.let { list ->
+                Log.i("App", "refresh - fetchFoods done")
+                allFoods = list
+            }
+            Log.i("App", "refresh done")
         }
     }
 
     if (model.settingsIncomplete) {
+        Log.i("App", "settings incomplete, forcing settings page")
         pageToShow = Pages.SETTINGS
     } else if (allShoppingLists == null && errorMessage.value == null) {
+        Log.i("App", "initial refresh")
         refresh.invoke()
     }
 
@@ -86,19 +97,28 @@ fun App(model: Model) {
         Row {
             Button(
                 enabled = !model.settingsIncomplete,
-                onClick = { refresh.invoke() }) {
+                onClick = {
+                    Log.i("App", "[refresh] tapped")
+                    refresh.invoke()
+                }) {
                 Text("\uD83D\uDDD8")
             }
 
             Button(
                 enabled = pageToShow != Pages.LISTS && allShoppingLists != null,
-                onClick = { pageToShow = Pages.LISTS }) {
+                onClick = {
+                    Log.i("App", "[lists] tapped")
+                    pageToShow = Pages.LISTS
+                }) {
                 Text("shopping lists")
             }
 
             Button(
                 enabled = pageToShow != Pages.FOODS && allFoods != null,
-                onClick = { pageToShow = Pages.FOODS }) {
+                onClick = {
+                    Log.i("App", "[foods] tapped")
+                    pageToShow = Pages.FOODS
+                }) {
                 Text("foods")
             }
 
@@ -107,8 +127,7 @@ fun App(model: Model) {
             Button(
                 //always enabled //enabled = pageToShow != Pages.SETTINGS,
                 onClick = {
-
-                    Log.d("App", "settings clicked")
+                    Log.i("App", "[settings] tapped")
                     pageToShow = if (pageToShow == Pages.SETTINGS) Pages.LISTS else Pages.SETTINGS
                 },
                 modifier = Modifier.weight(1f)
