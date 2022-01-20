@@ -1,10 +1,7 @@
 package biz.wolschon.tandoorshopping.common.api
 
 import biz.wolschon.tandoorshopping.common.Log
-import biz.wolschon.tandoorshopping.common.api.model.TandoorPagedFoodList
-import biz.wolschon.tandoorshopping.common.api.model.TandoorRecipe
-import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingList
-import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry
+import biz.wolschon.tandoorshopping.common.api.model.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import biz.wolschon.tandoorshopping.common.getHttpClient
@@ -27,7 +24,14 @@ class APIClient {
             header("Authorization", "Token $accessToken")
         }
 
-    suspend fun fetchRecipe(baseurl: String, accessToken: String, recipeId: Int) =
+    suspend fun fetchShoppingListRecipe(baseurl: String, accessToken: String, recipeId: ShopppingListRecipeId) =
+        getHttpClient().get<TandoorShoppingListRecipe> {
+            url("$baseurl/shopping-list-recipe/$recipeId")
+            contentType(ContentType.Application.Json)
+            header("Authorization", "Token $accessToken")
+        }
+
+    suspend fun fetchRecipe(baseurl: String, accessToken: String, recipeId: RecipeId) =
         getHttpClient().get<TandoorRecipe> {
             url("$baseurl/recipe/$recipeId")
             contentType(ContentType.Application.Json)

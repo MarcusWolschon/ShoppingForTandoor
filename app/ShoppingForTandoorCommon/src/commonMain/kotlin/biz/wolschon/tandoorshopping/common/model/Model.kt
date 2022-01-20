@@ -99,7 +99,7 @@ class Model(dbDriver: DatabaseDriverFactory) {
     }
 
     private val cachedRecipes = mutableMapOf<Int, TandoorRecipe>()
-    private suspend fun fetchRecipe(recipeId: Int, cached: Boolean): TandoorRecipe? {
+    private suspend fun fetchRecipe(recipeId: RecipeId, cached: Boolean): TandoorRecipe? {
         if (cached) {
             cachedRecipes[recipeId]?.let { return it }
         }
@@ -122,6 +122,31 @@ class Model(dbDriver: DatabaseDriverFactory) {
         return null
     }
 
+    private val cachedShoppingListRecipes = mutableMapOf<ShopppingListRecipeId, TandoorShoppingListRecipe>()
+    private suspend fun fetchRecipeFromShoppingList(recipeId: ShopppingListRecipeId, cached: Boolean): TandoorRecipe? {
+        if (cached) {
+            cachedShoppingListRecipes[recipeId]?.let { return fetchRecipe(it.recipe, true) }
+        }
+        val apiUrl = apiUrl ?: return null
+        val apiToken = apiToken ?: return null
+        try {
+            return coroutineScope {
+                Log.e("Model", "fetchRecipeFromShoppingList() calling api")
+                val shoppingListRecipe = api.fetchShoppingListRecipe(apiUrl, apiToken, recipeId).also {
+                    cachedShoppingListRecipes[recipeId] = it
+                }
+                fetchRecipe(shoppingListRecipe.recipe, cached)
+            }
+        } catch (x: UnresolvedAddressException) {
+            Log.e("Model", "fetchRecipeFromShoppingList() error", x)
+            errorMessage.value = "Server address unresolvable"
+        } catch (x: ClientRequestException) {
+            Log.e("Model", "fetchRecipeFromShoppingList() error", x)
+            handleClientRequestException(x)
+        }
+        return null
+    }
+
     suspend fun fetchShoppingLists(): List<TandoorShoppingList>? {
         Log.e("Model", "fetchShoppingLists() entered")
         val apiUrl = apiUrl ?: return null
@@ -134,7 +159,12 @@ class Model(dbDriver: DatabaseDriverFactory) {
                     list.forEach {
                         it.entries.forEach { entry ->
                             entry.list_recipe?.let { recipeId ->
-                                entry.recipe = fetchRecipe(recipeId, true)
+                                val recipe  = fetchRecipeFromShoppingList(recipeId, true)
+                                entry.recipe = recipe
+                                if (recipe == null) {
+                                    Log.e("Model", "Recipe $recipeId for shopping list ${it.id}" +
+                                            " entry ${entry.id} = ${entry.food.name} could not be loaded")
+                                }
                             }
                         }
                     }

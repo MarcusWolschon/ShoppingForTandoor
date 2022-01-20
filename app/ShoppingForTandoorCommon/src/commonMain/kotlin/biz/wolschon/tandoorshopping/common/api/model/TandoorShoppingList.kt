@@ -50,7 +50,7 @@ data class TandoorShoppingList (
 @Serializable
 data class TandoorShoppingListEntry (
     val id: Int,
-    val list_recipe: Int?,
+    val list_recipe: ShopppingListRecipeId?,
     @Transient
     var recipe: TandoorRecipe? = null,
     val food: TandoorFood,
