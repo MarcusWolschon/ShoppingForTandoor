@@ -27,7 +27,8 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
                      showFinished: Boolean,
                      showID: Boolean = false,
                      onFoodCheckedChanged: (TandoorShoppingListEntry, Boolean) -> Unit,
-                     onFoodSelected: (TandoorFood) -> Unit) {
+                     onFoodSelected: (TandoorFood) -> Unit,
+                     onRecipeClicked: (Int?, TandoorRecipe?) -> Unit) {
 
     // state to be remembered
 
@@ -108,11 +109,19 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
      * Render a header for a new category
      */
     @Composable
-    fun shoppingListRecipe(recipeId: Int?, recipe: TandoorRecipe?) {
-        Row(modifier = Modifier.fillMaxWidth().background(Color.LightGray)) {
+    fun shoppingListRecipe(recipeId: Int?,
+                           recipe: TandoorRecipe?,
+                           onRecipeClicked: (Int?, TandoorRecipe?) -> Unit) {
+        Row(modifier = Modifier.fillMaxWidth()
+            .background(Color.LightGray)
+            .clickable {
+                onRecipeClicked(recipeId, recipe)
+            }) {
             Text(
                 text = recipe?.name ?: "Recipe #$recipeId",
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                textDecoration = TextDecoration.Underline,
+                color = Color.Blue
             )
         }
     }
@@ -191,7 +200,7 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
                     val item = items[index - 1]
                     if (lastSorting is SortByRecipe) {
                         if (index == 1 || items[index - 2].list_recipe != item.list_recipe) {
-                            shoppingListRecipe(item.list_recipe, item.recipe)
+                            shoppingListRecipe(item.list_recipe, item.recipe, onRecipeClicked)
                         }
                     }
                     if (index == 1 || items[index - 2].food.safeCategoryId != item.food.safeCategoryId) {

@@ -1,6 +1,10 @@
 package biz.wolschon.tandoorshopping.common
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import biz.wolschon.tandoorshopping.common.model.db.AppDatabase
 import com.squareup.sqldelight.android.AndroidSqliteDriver
 import com.squareup.sqldelight.db.SqlDriver
@@ -15,12 +19,25 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 
+
 actual fun getPlatformName(): String {
     return "Android"
 }
 
 actual val DBDispatcher: CoroutineDispatcher = Dispatchers.IO
 actual val NetworkDispatcher: CoroutineDispatcher = Dispatchers.IO
+
+actual data class PlatformContext(val context: Context)
+
+@Composable
+actual fun getPlatformContext() =  PlatformContext(
+    context = LocalContext.current
+)
+
+actual fun openBrowser(platformContext: PlatformContext, url: String) {
+    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+    platformContext.context.startActivity(browserIntent)
+}
 
 actual class DatabaseDriverFactory(private val context: Context) {
     actual fun createDriver(): SqlDriver {

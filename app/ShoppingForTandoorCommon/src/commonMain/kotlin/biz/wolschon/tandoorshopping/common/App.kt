@@ -29,6 +29,7 @@ private enum class Pages { LISTS, LIST, FOODS, FOOD, SETTINGS }
 @Composable
 fun App(model: Model) {
     // state
+    val platformContext = getPlatformContext()
     val errorMessage = model.errorMessage.collectAsState()
     var pageToShow by remember { mutableStateOf(Pages.LISTS) }
     var showFinished by remember { mutableStateOf(false) }
@@ -178,6 +179,14 @@ fun App(model: Model) {
                     onFoodSelected = { food ->
                         currentFood = food
                         pageToShow = Pages.FOOD
+                    },
+                    onRecipeClicked = { recipeId, recipe ->
+                        (recipeId ?: recipe?.id)?.let { recipeId ->
+                            model.apiUrl?.let { apiUrl ->
+                                openBrowser(platformContext, "$apiUrl/../view/recipe/$recipeId")
+                            }
+                        }
+
                     }
                 )
             }
