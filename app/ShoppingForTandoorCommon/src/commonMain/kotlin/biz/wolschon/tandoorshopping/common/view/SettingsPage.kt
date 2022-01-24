@@ -3,8 +3,7 @@ package biz.wolschon.tandoorshopping.common.view
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
@@ -12,8 +11,8 @@ import biz.wolschon.tandoorshopping.common.model.Model
 
 @Composable
 fun SettingsPage(model: Model) {
-    val apiUrlState = model.apiUrlLive.collectAsState(initial = Model.defaultApiURL)
-    val apiTokenState = model.apiTokenLive.collectAsState(initial = Model.defaultApiURL)
+    var baseUrlState by remember { mutableStateOf(model.baseUrl ?: Model.defaultBaseURL) }//model.baseUrlLive.collectAsState(initial = Model.defaultBaseURL)
+    val apiTokenState = model.apiTokenLive.collectAsState(initial = "")
 
     Column {
         Text(
@@ -22,10 +21,12 @@ fun SettingsPage(model: Model) {
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         TextField(
-            value = apiUrlState.value,
+            value = baseUrlState,
             label = { Text("Server") },
             onValueChange = { value ->
-                model.apiUrl = value
+                model.baseUrl = value
+                baseUrlState = value
+                model.errorMessage.value = null
             },
             singleLine = true
         )

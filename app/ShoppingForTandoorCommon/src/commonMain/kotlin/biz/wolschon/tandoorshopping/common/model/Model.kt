@@ -1,3 +1,4 @@
+@file:Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
 package biz.wolschon.tandoorshopping.common.model
 
 import biz.wolschon.tandoorshopping.common.model.db.AppDatabase
@@ -18,17 +19,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import java.nio.channels.UnresolvedAddressException
 
 class Model(dbDriver: DatabaseDriverFactory) {
     companion object {
-        const val defaultApiURL = "https://rezepte.SERVER/api"
+        const val defaultBaseURL = "https://rezepte.SERVER"
     }
 
     val settingsIncomplete
-        get() = apiToken.isNullOrBlank() || apiUrl == defaultApiURL
+        get() = apiToken.isNullOrBlank() || baseUrl == defaultBaseURL
     private val api = APIClient()
     private val database = AppDatabase(
         dbDriver.createDriver()
@@ -36,10 +38,19 @@ class Model(dbDriver: DatabaseDriverFactory) {
     )
     val errorMessage = MutableStateFlow<String?>(null)
 
-    val apiUrlLive: Flow<String> = database.settingsQueries.getSetting("apiUrl").asFlow().mapToOneOrNull(context = DBDispatcher).map { it?.value ?: defaultApiURL }
-    var apiUrl: String?
-        get() = database.settingsQueries.getSetting("apiUrl").executeAsOneOrNull()?.value?.trim() ?: defaultApiURL
-        set(value) = database.settingsQueries.replaceSetting("apiUrl", value)
+    //val baseUrlLive: Flow<String> = database.settingsQueries.getSetting("apiUrl").asFlow().mapToOneOrNull(context = DBDispatcher).map { it?.value ?: defaultBaseURL }
+    var baseUrl: String?
+        get() {
+            val value = database.settingsQueries.getSetting("baseUrl").executeAsOneOrNull()?.value?.trim() ?: defaultBaseURL
+            Log.d("Model", "baseUrl.get $value")
+            return value
+        }
+        set(value) {
+            Log.d("Model", "baseUrl.set $value")
+            database.settingsQueries.replaceSetting("baseUrl", value)
+        }
+    val apiUrl: String?
+        get() = baseUrl?.let { "$it/api"  }
 
     val apiTokenLive: Flow<String> = database.settingsQueries.getSetting("apiToken").asFlow().mapToOneOrNull(context = DBDispatcher).map { it?.value ?: "" }
     var apiToken: String?
@@ -54,6 +65,12 @@ class Model(dbDriver: DatabaseDriverFactory) {
         if (throwable is ClientRequestException) {
             errorMessage.value = throwable.message
         }
+        if (throwable is SerializationException) {
+            errorMessage.value = "JSON malfunction"
+        }
+        /*if (throwable is kotlinx.serialization.MissingFieldException) {
+            errorMessage.value = "API malfunction"
+        }*/
     }
 
     private val errorJson = Json(KotlinxSerializer.DefaultJson) {
@@ -147,34 +164,35 @@ class Model(dbDriver: DatabaseDriverFactory) {
         return null
     }
 
-    suspend fun fetchShoppingLists(): List<TandoorShoppingList>? {
-        Log.e("Model", "fetchShoppingLists() entered")
+    suspend fun fetchShoppingList(): List<TandoorShoppingListEntry>? {
+        Log.e("Model", "fetchShoppingList() entered")
         val apiUrl = apiUrl ?: return null
         val apiToken = apiToken ?: return null
-        Log.e("Model", "fetchShoppingLists() starting")
+        Log.e("Model", "fetchShoppingList() starting")
         try {
             return coroutineScope {
-                Log.e("Model", "fetchShoppingLists() calling api")
-                api.fetchShoppingLists(apiUrl, apiToken).also { list ->
-                    list.forEach {
-                        it.entries.forEach { entry ->
-                            entry.list_recipe?.let { recipeId ->
-                                val recipe  = fetchRecipeFromShoppingList(recipeId, true)
-                                entry.recipe = recipe
-                                if (recipe == null) {
-                                    Log.e("Model", "Recipe $recipeId for shopping list ${it.id}" +
-                                            " entry ${entry.id} = ${entry.food.name} could not be loaded")
-                                }
+                Log.e("Model", "fetchShoppingList() calling api")
+                api.fetchShoppingList(apiUrl, apiToken).also { list ->
+                    list.forEach { entry ->
+                        entry.list_recipe?.let { recipeId ->
+                            val recipe = fetchRecipeFromShoppingList(recipeId, true)
+                            entry.recipe = recipe
+                            if (recipe == null) {
+                                Log.e(
+                                    "Model", "Recipe $recipeId " +
+                                            "for shopping list entry ${entry.id} = ${entry.food.name} " +
+                                            "could not be loaded"
+                                )
                             }
                         }
                     }
                 }
             }
         } catch (x: UnresolvedAddressException) {
-            Log.e("Model", "fetchShoppingLists() error", x)
+            Log.e("Model", "fetchShoppingList() error", x)
             errorMessage.value = "Server address unresolvable"
         } catch (x: ClientRequestException) {
-            Log.e("Model", "fetchShoppingLists() error", x)
+            Log.e("Model", "fetchShoppingList() error", x)
             handleClientRequestException(x)
         }
         return null

@@ -23,7 +23,7 @@ import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry.So
 import java.math.BigDecimal
 
 @Composable
-fun shoppingListView(shoppingList: TandoorShoppingList,
+fun shoppingListView(entries: List<TandoorShoppingListEntry>,
                      showFinished: Boolean,
                      showID: Boolean = false,
                      onFoodCheckedChanged: (TandoorShoppingListEntry, Boolean) -> Unit,
@@ -100,9 +100,9 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
         }
     }
 
-    fun formatAmount(amount: BigDecimal): String {
+    fun formatAmount(amount: BigDecimal?): String {
         //val isInteger = amount.stripTrailingZeros().scale() <= 0
-        return amount.stripTrailingZeros().toPlainString()
+        return amount?.stripTrailingZeros()?.toPlainString() ?: ""
     }
 
     /**
@@ -118,7 +118,7 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
                 onRecipeClicked(recipeId, recipe)
             }) {
             Text(
-                text = recipe?.name ?: "Recipe #$recipeId",
+                text = recipe?.name ?: recipeId?.let{ "Recipe #$recipeId" } ?: "No recipe",
                 textAlign = TextAlign.Center,
                 textDecoration = TextDecoration.Underline,
                 color = Color.Blue
@@ -187,7 +187,7 @@ fun shoppingListView(shoppingList: TandoorShoppingList,
     // prepare the data to be shown
 
     val items: List<TandoorShoppingListEntry> =
-        (if (showFinished) shoppingList.entries else shoppingList.entries.filter { !it.checked })
+        (if (showFinished) entries else entries.filter { !it.checked })
             .sortedWith(lastSorting)
 
     // compose the UI elements

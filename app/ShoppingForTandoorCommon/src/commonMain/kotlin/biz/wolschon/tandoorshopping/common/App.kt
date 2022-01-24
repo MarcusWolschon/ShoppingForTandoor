@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
 import biz.wolschon.tandoorshopping.common.api.model.TandoorFood
-import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingList
 import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry
 import biz.wolschon.tandoorshopping.common.model.Model
 import biz.wolschon.tandoorshopping.common.view.*
@@ -24,19 +23,17 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import java.nio.channels.UnresolvedAddressException
 
-private enum class Pages { LISTS, LIST, FOODS, FOOD, SETTINGS }
+private enum class Pages { LIST, FOODS, FOOD, SETTINGS }
 
 @Composable
 fun App(model: Model) {
     // state
     val platformContext = getPlatformContext()
     val errorMessage = model.errorMessage.collectAsState()
-    var pageToShow by remember { mutableStateOf(Pages.LISTS) }
-    var showFinished by remember { mutableStateOf(false) }
+    var pageToShow by remember { mutableStateOf(Pages.LIST) }
     var showChecked by remember { mutableStateOf(false) }
-    var currentShoppingList by remember { mutableStateOf<TandoorShoppingList?>(null) }
     var currentFood by remember { mutableStateOf<TandoorFood?>(null) }
-    var allShoppingLists by remember { mutableStateOf<List<TandoorShoppingList>?>(null) }
+    var shoppingList by remember { mutableStateOf<List<TandoorShoppingListEntry>?>(null) }
     var allFoods by remember { mutableStateOf<List<TandoorFood>?>(null) }
     val scope = rememberCoroutineScope()
 
@@ -45,9 +42,9 @@ fun App(model: Model) {
 
     val errorHandler = CoroutineExceptionHandler { _, throwable ->
         Log.e("App", "NetworkDispatcher got", throwable)
-        if (throwable is UnresolvedAddressException) {
-            model.apiUrl = null
-        }
+        //if (throwable is UnresolvedAddressException) {
+            //model.baseUrl = null
+        //}
         if (throwable is ClientRequestException) {
             model.apiToken = null
         }
@@ -56,39 +53,37 @@ fun App(model: Model) {
     val refresh = {
         scope.launch(NetworkDispatcher + errorHandler) {
             Log.i("App", "refresh starting")
-            model.fetchShoppingLists()?.let { list ->
-                Log.i("App", "refresh - fetchShoppingLists done")
-                allShoppingLists = list
+            model.fetchShoppingList()?.let { entries ->
+                Log.i("App", "refresh - fetchShoppingList done")
+                shoppingList = entries
             }
-            Log.i("App", "refresh - fetchFoods starting")
-            model.fetchFoods()?.let { list ->
-                Log.i("App", "refresh - fetchFoods done")
-                allFoods = list
+            if (model.errorMessage.value == null) {
+                Log.i("App", "refresh - fetchFoods starting")
+                model.fetchFoods()?.let { list ->
+                    Log.i("App", "refresh - fetchFoods done")
+                    allFoods = list
+                }
+                Log.i("App", "refresh done")
             }
-            Log.i("App", "refresh done")
         }
     }
 
     if (model.settingsIncomplete) {
         Log.i("App", "settings incomplete, forcing settings page")
         pageToShow = Pages.SETTINGS
-    } else if (allShoppingLists == null && errorMessage.value == null) {
-        Log.i("App", "initial refresh")
-        refresh.invoke()
-    }
-
-    if (pageToShow == Pages.LIST && currentShoppingList == null) {
-        pageToShow = Pages.LISTS
+    } else if (shoppingList == null && errorMessage.value == null) {
+        if (model.errorMessage.value == null) {
+            Log.i("App", "initial refresh")
+            refresh.invoke()
+        }
     }
 
     fun updateFoodEntry(foodItem: TandoorShoppingListEntry, checked: Boolean) {
         scope.launch(NetworkDispatcher) {
             model.updateShoppingListItemChecked(foodItem.id, checked)
             //model.updateShoppingListItemChecked(foodItem.copy(checked = checked))
-            model.fetchShoppingLists()?.let { list ->
-                allShoppingLists = list
-                val oldListId = currentShoppingList?.id
-                currentShoppingList = list.find { sl -> sl.id == oldListId }
+            model.fetchShoppingList()?.let { entries ->
+                shoppingList = entries
             }
         }
     }
@@ -106,10 +101,10 @@ fun App(model: Model) {
             }
 
             Button(
-                enabled = pageToShow != Pages.LISTS && allShoppingLists != null,
+                enabled = pageToShow != Pages.LIST && shoppingList != null,
                 onClick = {
-                    Log.i("App", "[lists] tapped")
-                    pageToShow = Pages.LISTS
+                    Log.i("App", "[list] tapped")
+                    pageToShow = Pages.LIST
                 }) {
                 Text("shopping lists")
             }
@@ -129,7 +124,7 @@ fun App(model: Model) {
                 //always enabled //enabled = pageToShow != Pages.SETTINGS,
                 onClick = {
                     Log.i("App", "[settings] tapped")
-                    pageToShow = if (pageToShow == Pages.SETTINGS) Pages.LISTS else Pages.SETTINGS
+                    pageToShow = if (pageToShow == Pages.SETTINGS) Pages.LIST else Pages.SETTINGS
                 },
                 modifier = Modifier.weight(1f)
             ) {
@@ -139,32 +134,16 @@ fun App(model: Model) {
 
         errorMessage.value?.let { error ->
             Row(Modifier.background(Color.Red).fillMaxWidth()) {
-                Text(text = error, color = Color.White)
+                Text(text = error, color = Color.White, maxLines = 3)
             }
         }
 
         when (pageToShow) {
             Pages.SETTINGS -> SettingsPage(model)
 
-            Pages.LISTS -> allShoppingLists?.let {
+            Pages.LIST -> shoppingList?.let {
                 Text(
-                    "All shopping lists:",
-                    fontSize = 20.sp,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-                Row {
-                    Checkbox(checked = showFinished, onCheckedChange = { checked -> showFinished = checked })
-                    Text("show finished lists", Modifier.align(CenterVertically))
-                }
-                shoppingListList(it, showFinished) { shoppingList ->
-                    currentShoppingList = shoppingList
-                    pageToShow = Pages.LIST
-                }
-            }
-
-            Pages.LIST -> currentShoppingList?.let {
-                Text(
-                    "Shopping list ${it.id} ${it.note ?: ""}:",
+                    "Shopping list",
                     fontSize = 20.sp,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
@@ -181,9 +160,9 @@ fun App(model: Model) {
                         pageToShow = Pages.FOOD
                     },
                     onRecipeClicked = { recipeId, recipe ->
-                        (recipeId ?: recipe?.id)?.let { recipeId ->
-                            model.apiUrl?.let { apiUrl ->
-                                openBrowser(platformContext, "$apiUrl/../view/recipe/$recipeId")
+                        (recipeId ?: recipe?.id)?.let { rId ->
+                            model.baseUrl?.let { baseUrl ->
+                                openBrowser(platformContext, "$baseUrl/view/recipe/$rId")
                             }
                         }
 
@@ -197,7 +176,7 @@ fun App(model: Model) {
                     fontSize = 20.sp,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
-                foodListView(it, showFinished) { food ->
+                foodListView(foods = it, showID = true) { food ->
                     currentFood = food
                     pageToShow = Pages.FOOD
                 }
