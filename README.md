@@ -3,6 +3,7 @@
 
 Independent companion app using the REST API of Tandoor Recipes to display and maintain a shopping list.
 
+- Alpha version [in Google Play Store](https://play.google.com/apps/testing/biz.wolschon.tandoorshopping.android)
 - my [personal fork of Tandoor Recipes](https://github.com/MarcusWolschon/recipes) with improved recipe import and developer documentation
 - [official Tandoor Recipes](https://github.com/TandoorRecipes/recipes)
 
