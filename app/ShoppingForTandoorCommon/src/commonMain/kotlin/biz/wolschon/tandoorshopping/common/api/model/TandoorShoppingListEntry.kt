@@ -45,8 +45,27 @@ data class TandoorShoppingListEntry (
             }
     }
 
-    class SortByCategory(val inverted: Boolean = false) : Comparator<TandoorShoppingListEntry> {
+    class SortByCategory(private val supermarket: TandoorSupermarket?,
+                         val inverted: Boolean = false) : Comparator<TandoorShoppingListEntry> {
+
+        private fun getOrder(food: TandoorFood): Int {
+            val lookFor = food.supermarket_category ?: return -1
+            val categories = supermarket?.category_to_supermarket ?: return -1
+            return categories.find { a: TandoorSupermarketToCategory ->
+                    a.category.id == lookFor.id
+            }?.order ?: -1
+        }
+
         override fun compare(a: TandoorShoppingListEntry, b: TandoorShoppingListEntry) =
+            supermarket ?.let {
+                // sort by order of categories in market
+                if (inverted) {
+                    getOrder(b.food).compareTo(getOrder(a.food))
+                } else {
+                    getOrder(a.food).compareTo(getOrder(b.food))
+                }
+            } ?:
+            // sort by category name
             if (inverted) {
                 b.food.safeCategoryName.compareTo(a.food.safeCategoryName)
             } else {

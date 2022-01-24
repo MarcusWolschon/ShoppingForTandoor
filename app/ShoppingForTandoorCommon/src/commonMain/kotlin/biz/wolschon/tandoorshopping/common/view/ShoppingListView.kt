@@ -26,13 +26,17 @@ import java.math.BigDecimal
 fun shoppingListView(entries: List<TandoorShoppingListEntry>,
                      showFinished: Boolean,
                      showID: Boolean = false,
+                     currentSupermarket: TandoorSupermarket?,
                      onFoodCheckedChanged: (TandoorShoppingListEntry, Boolean) -> Unit,
                      onFoodSelected: (TandoorFood) -> Unit,
                      onRecipeClicked: (Int?, TandoorRecipe?) -> Unit) {
 
     // state to be remembered
 
-    var lastSorting by remember { mutableStateOf<Comparator<TandoorShoppingListEntry>>(SortByRecipe()) }
+    var lastSorting by remember {
+        val defaultSorting = currentSupermarket?.let { SortByCategory(currentSupermarket) } ?: SortByRecipe()
+        mutableStateOf(defaultSorting)
+    }
 
     // common layout data
 
@@ -72,9 +76,9 @@ fun shoppingListView(entries: List<TandoorShoppingListEntry>,
             }
             Button(onClick = {
                 lastSorting = if ((lastSorting as? SortByCategory)?.inverted == false) {
-                    SortByCategory(inverted = true)
+                    SortByCategory(currentSupermarket, inverted = true)
                 } else {
-                    SortByCategory()
+                    SortByCategory(currentSupermarket)
                 }
             }, categoryModifier) {
                 Text("category")
@@ -101,7 +105,6 @@ fun shoppingListView(entries: List<TandoorShoppingListEntry>,
     }
 
     fun formatAmount(amount: BigDecimal?): String {
-        //val isInteger = amount.stripTrailingZeros().scale() <= 0
         return amount?.stripTrailingZeros()?.toPlainString() ?: ""
     }
 
@@ -130,13 +133,21 @@ fun shoppingListView(entries: List<TandoorShoppingListEntry>,
      * Render a header for a new category
      */
     @Composable
-    fun shoppingListCategory(foodCategory: TandoorSupermarketCategory) {
+    fun shoppingListCategory(foodCategory: TandoorSupermarketCategory,
+                             showGreyed: Boolean) {
         Row(modifier = Modifier.fillMaxWidth()) {
             if (showID) {
                 Spacer(idModifier)
             }
             Spacer(checkedModifier)
-            Text(foodCategory.name)
+
+
+            val textColor = if (showGreyed) Color.Gray else  Color.Black
+
+            Text(
+                text = if (showGreyed) "[MISSING] ${foodCategory.name}" else foodCategory.name,
+                color = textColor
+            )
         }
     }
 
@@ -146,7 +157,8 @@ fun shoppingListView(entries: List<TandoorShoppingListEntry>,
     @Composable
     fun shoppingListItemView(
         foodEntry: TandoorShoppingListEntry,
-        onFoodCheckedChanged: (TandoorShoppingListEntry, Boolean) -> Unit
+        onFoodCheckedChanged: (TandoorShoppingListEntry, Boolean) -> Unit,
+        showGreyed: Boolean
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
             if (showID) {
@@ -161,16 +173,21 @@ fun shoppingListView(entries: List<TandoorShoppingListEntry>,
                 foodEntry.food.supermarket_category.name,
                 categoryModifier.align(Alignment.CenterVertically),
             )*/
+
+            val textColor = if (showGreyed) Color.Gray else  Color.Black
+
             Text(
                 formatAmount(foodEntry.amountBigDecimal),
                 amountModifier.align(Alignment.CenterVertically),
-                textAlign = TextAlign.End
+                textAlign = TextAlign.End,
+                color = textColor
             )
             Spacer(Modifier.width(1.dp))
             Text(
                 foodEntry.unit?.name ?: "-",
                 unitModifier.align(Alignment.CenterVertically),
-                textAlign = TextAlign.Start
+                textAlign = TextAlign.Start,
+                color = textColor
             )
             Text(
                 text = foodEntry.food.name,
@@ -203,10 +220,14 @@ fun shoppingListView(entries: List<TandoorShoppingListEntry>,
                             shoppingListRecipe(item.list_recipe, item.recipe, onRecipeClicked)
                         }
                     }
+                    val category = item.food.supermarket_category
+                    val greyed = category != null &&
+                            currentSupermarket != null &&
+                            !currentSupermarket.hasCategory(category)
                     if (index == 1 || items[index - 2].food.safeCategoryId != item.food.safeCategoryId) {
-                        item.food.supermarket_category?.let { shoppingListCategory(it) }
+                        item.food.supermarket_category?.let { shoppingListCategory(it, showGreyed = greyed) }
                     }
-                    shoppingListItemView(item, onFoodCheckedChanged)
+                    shoppingListItemView(item, onFoodCheckedChanged, showGreyed = greyed)
                 }
             }
 

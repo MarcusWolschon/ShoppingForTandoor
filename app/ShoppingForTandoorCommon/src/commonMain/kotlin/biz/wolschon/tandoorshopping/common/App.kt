@@ -16,12 +16,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
 import biz.wolschon.tandoorshopping.common.api.model.TandoorFood
 import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry
+import biz.wolschon.tandoorshopping.common.api.model.TandoorSupermarket
 import biz.wolschon.tandoorshopping.common.model.Model
 import biz.wolschon.tandoorshopping.common.view.*
 import io.ktor.client.features.*
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import java.nio.channels.UnresolvedAddressException
 
 private enum class Pages { LIST, FOODS, FOOD, SETTINGS }
 
@@ -30,11 +31,14 @@ fun App(model: Model) {
     // state
     val platformContext = getPlatformContext()
     val errorMessage = model.errorMessage.collectAsState()
+    var isRefreshing by remember { mutableStateOf(false) }
     var pageToShow by remember { mutableStateOf(Pages.LIST) }
     var showChecked by remember { mutableStateOf(false) }
     var currentFood by remember { mutableStateOf<TandoorFood?>(null) }
     var shoppingList by remember { mutableStateOf<List<TandoorShoppingListEntry>?>(null) }
-    var allFoods by remember { mutableStateOf<List<TandoorFood>?>(null) }
+    var allFoods by remember { mutableStateOf(model.databaseModel.getCachedFoods()) }
+    var allSupermarkets by remember { mutableStateOf(model.databaseModel.getCachedSupermarkets()) }
+    var currentSupermarket by remember { mutableStateOf<TandoorSupermarket?>(null) }
     val scope = rememberCoroutineScope()
 
     // pages
@@ -46,33 +50,47 @@ fun App(model: Model) {
             //model.baseUrl = null
         //}
         if (throwable is ClientRequestException) {
-            model.apiToken = null
+            model.settings.apiToken = null
         }
     }
 
     val refresh = {
-        scope.launch(NetworkDispatcher + errorHandler) {
+        isRefreshing = true
+        GlobalScope.launch(NetworkDispatcher + errorHandler) {
             Log.i("App", "refresh starting")
-            model.fetchShoppingList()?.let { entries ->
-                Log.i("App", "refresh - fetchShoppingList done")
-                shoppingList = entries
-            }
+            try {
+                model.fetchShoppingList()?.let { entries ->
+                    Log.i("App", "refresh - fetchShoppingList success")
+                    shoppingList = entries
+                } ?: Log.e("App", "refresh - fetchShoppingList failed")
+                if (model.errorMessage.value == null) {
+                    Log.i("App", "refresh - fetchFoods starting")
+                    model.fetchFoods()?.let { list ->
+                        Log.i("App", "refresh - fetchFoods done")
+                        allFoods = list
+                    }
+                    Log.i("App", "refresh done")
+                }
             if (model.errorMessage.value == null) {
-                Log.i("App", "refresh - fetchFoods starting")
-                model.fetchFoods()?.let { list ->
-                    Log.i("App", "refresh - fetchFoods done")
-                    allFoods = list
+                Log.i("App", "refresh - fetchSupermarkets starting")
+                model.fetchSupermarkets()?.let { list ->
+                    Log.i("App", "refresh - fetchSupermarkets done")
+                    allSupermarkets = list.values.toList()
                 }
                 Log.i("App", "refresh done")
+            }
+            } finally {
+                Log.i("App", "refresh finally")
+                isRefreshing = false
             }
         }
     }
 
-    if (model.settingsIncomplete) {
+    if (model.settings.settingsIncomplete) {
         Log.i("App", "settings incomplete, forcing settings page")
         pageToShow = Pages.SETTINGS
     } else if (shoppingList == null && errorMessage.value == null) {
-        if (model.errorMessage.value == null) {
+        if (model.errorMessage.value == null && !isRefreshing)  {
             Log.i("App", "initial refresh")
             refresh.invoke()
         }
@@ -92,7 +110,7 @@ fun App(model: Model) {
         // top level bar
         Row {
             Button(
-                enabled = !model.settingsIncomplete,
+                enabled = !model.settings.settingsIncomplete && !isRefreshing,
                 onClick = {
                     Log.i("App", "[refresh] tapped")
                     refresh.invoke()
@@ -110,7 +128,7 @@ fun App(model: Model) {
             }
 
             Button(
-                enabled = pageToShow != Pages.FOODS && allFoods != null,
+                enabled = pageToShow != Pages.FOODS,
                 onClick = {
                     Log.i("App", "[foods] tapped")
                     pageToShow = Pages.FOODS
@@ -138,8 +156,14 @@ fun App(model: Model) {
             }
         }
 
+        if (isRefreshing) {
+            Row(Modifier.background(Color.Yellow).fillMaxWidth()) {
+                Text(text = "loading...", color = Color.Black)
+            }
+        }
+
         when (pageToShow) {
-            Pages.SETTINGS -> SettingsPage(model)
+            Pages.SETTINGS -> SettingsPage(model.settings, model.errorMessage)
 
             Pages.LIST -> shoppingList?.let {
                 Text(
@@ -151,9 +175,22 @@ fun App(model: Model) {
                     Checkbox(checked = showChecked, onCheckedChange = { checked -> showChecked = checked })
                     Text("show checked foods", Modifier.align(CenterVertically))
                 }
+                allSupermarkets.forEach { market ->
+                    Row {
+                        Checkbox(checked = (currentSupermarket?.id == market.id),
+                            onCheckedChange = { checked ->
+                                if (checked && currentSupermarket?.id != market.id) {
+                                    currentSupermarket = market
+                                }
+                            })
+                        Text(market.name, Modifier.align(CenterVertically))
+                    }
+                }
                 shoppingListView(
-                    it,
-                    showChecked,
+                    entries = it,
+                    showFinished = showChecked,
+                    showID = false,
+                    currentSupermarket,
                     onFoodCheckedChanged =  { foodItem, checked -> updateFoodEntry(foodItem, checked) },
                     onFoodSelected = { food ->
                         currentFood = food
@@ -161,7 +198,7 @@ fun App(model: Model) {
                     },
                     onRecipeClicked = { recipeId, recipe ->
                         (recipeId ?: recipe?.id)?.let { rId ->
-                            model.baseUrl?.let { baseUrl ->
+                            model.settings.baseUrl?.let { baseUrl ->
                                 openBrowser(platformContext, "$baseUrl/view/recipe/$rId")
                             }
                         }
@@ -170,13 +207,13 @@ fun App(model: Model) {
                 )
             }
 
-            Pages.FOODS -> allFoods?.let {
+            Pages.FOODS -> {
                 Text(
                     "All foods:",
                     fontSize = 20.sp,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
-                foodListView(foods = it, showID = true) { food ->
+                foodListView(foods = allFoods, showID = true) { food ->
                     currentFood = food
                     pageToShow = Pages.FOOD
                 }

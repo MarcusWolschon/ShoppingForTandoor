@@ -8,11 +8,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
 import biz.wolschon.tandoorshopping.common.model.Model
+import biz.wolschon.tandoorshopping.common.model.SettingsModel
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
-fun SettingsPage(model: Model) {
-    var baseUrlState by remember { mutableStateOf(model.baseUrl ?: Model.defaultBaseURL) }//model.baseUrlLive.collectAsState(initial = Model.defaultBaseURL)
-    val apiTokenState = model.apiTokenLive.collectAsState(initial = "")
+fun SettingsPage(settings: SettingsModel, errorMessage: MutableStateFlow<String?>) {
+    var baseUrlState by remember { mutableStateOf(settings.baseUrl ?: Model.defaultBaseURL) }//model.baseUrlLive.collectAsState(initial = Model.defaultBaseURL)
+    val apiTokenState = settings.apiTokenLive.collectAsState(initial = "")
 
     Column {
         Text(
@@ -24,9 +26,9 @@ fun SettingsPage(model: Model) {
             value = baseUrlState,
             label = { Text("Server") },
             onValueChange = { value ->
-                model.baseUrl = value
+                settings.baseUrl = value
                 baseUrlState = value
-                model.errorMessage.value = null
+                errorMessage.value = null
             },
             singleLine = true
         )
@@ -34,7 +36,7 @@ fun SettingsPage(model: Model) {
             value = apiTokenState.value,
             label = { Text("API Token") },
             onValueChange = { value ->
-                model.apiToken = value
+                settings.apiToken = value
             },
             singleLine = true
         )

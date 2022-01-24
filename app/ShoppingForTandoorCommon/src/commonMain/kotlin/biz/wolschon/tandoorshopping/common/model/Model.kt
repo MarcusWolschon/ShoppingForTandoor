@@ -1,22 +1,16 @@
 @file:Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
 package biz.wolschon.tandoorshopping.common.model
 
-import biz.wolschon.tandoorshopping.common.model.db.AppDatabase
 import biz.wolschon.tandoorshopping.common.DatabaseDriverFactory
 import biz.wolschon.tandoorshopping.common.api.APIClient
-import biz.wolschon.tandoorshopping.common.DBDispatcher
 import biz.wolschon.tandoorshopping.common.Log
 import biz.wolschon.tandoorshopping.common.api.model.*
-import com.squareup.sqldelight.runtime.coroutines.asFlow
-import com.squareup.sqldelight.runtime.coroutines.mapToOneOrNull
 import io.ktor.client.features.*
 import io.ktor.client.features.json.serializer.*
 import io.ktor.client.statement.*
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
@@ -28,34 +22,13 @@ class Model(dbDriver: DatabaseDriverFactory) {
     companion object {
         const val defaultBaseURL = "https://rezepte.SERVER"
     }
+    val databaseModel = DatabaseModel(dbDriver)
+    val settings = databaseModel.createSettingsModel()
 
-    val settingsIncomplete
-        get() = apiToken.isNullOrBlank() || baseUrl == defaultBaseURL
     private val api = APIClient()
-    private val database = AppDatabase(
-        dbDriver.createDriver()
-        //XYZAdapter = XYZ.Adapter(OtherAdapters,...)
-    )
     val errorMessage = MutableStateFlow<String?>(null)
 
-    //val baseUrlLive: Flow<String> = database.settingsQueries.getSetting("apiUrl").asFlow().mapToOneOrNull(context = DBDispatcher).map { it?.value ?: defaultBaseURL }
-    var baseUrl: String?
-        get() {
-            val value = database.settingsQueries.getSetting("baseUrl").executeAsOneOrNull()?.value?.trim() ?: defaultBaseURL
-            Log.d("Model", "baseUrl.get $value")
-            return value
-        }
-        set(value) {
-            Log.d("Model", "baseUrl.set $value")
-            database.settingsQueries.replaceSetting("baseUrl", value)
-        }
-    val apiUrl: String?
-        get() = baseUrl?.let { "$it/api"  }
 
-    val apiTokenLive: Flow<String> = database.settingsQueries.getSetting("apiToken").asFlow().mapToOneOrNull(context = DBDispatcher).map { it?.value ?: "" }
-    var apiToken: String?
-        get() = database.settingsQueries.getSetting("apiToken").executeAsOneOrNull()?.value
-        set(value) = database.settingsQueries.replaceSetting("apiToken", value)
 
     private val errorHandler = CoroutineExceptionHandler { _, throwable ->
         Log.e("Model", "Networking error: ", throwable)
@@ -80,8 +53,8 @@ class Model(dbDriver: DatabaseDriverFactory) {
 
     @OptIn(ExperimentalSerializationApi::class)
     suspend fun fetchFoods(): List<TandoorFood>? {
-        val apiUrl = apiUrl ?: return null
-        val apiToken = apiToken ?: return null
+        val apiUrl = settings.apiUrl ?: return null
+        val apiToken = settings.apiToken ?: return null
         try {
             return coroutineScope {
                 var response = api.fetchFoods(apiUrl, apiToken)
@@ -91,7 +64,8 @@ class Model(dbDriver: DatabaseDriverFactory) {
                     allFoods.addAll(response.results)
                 }
 
-                allFoods
+                databaseModel.saveFoods(allFoods)
+                databaseModel.getCachedFoods()
             }
         } catch (x: UnresolvedAddressException) {
             Log.e("Model", "fetchFoods() error", x)
@@ -102,6 +76,29 @@ class Model(dbDriver: DatabaseDriverFactory) {
         }
         return null
     }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    suspend fun fetchSupermarkets(): Map<TandoorSupermarketId, TandoorSupermarket>? {
+        val apiUrl = settings.apiUrl ?: return null
+        val apiToken = settings.apiToken ?: return null
+        try {
+            return coroutineScope {
+                val allSupermarkets = api.fetchSupermarkets(apiUrl, apiToken)
+                databaseModel.saveSupermarkets(allSupermarkets)
+            }
+        } catch (x: UnresolvedAddressException) {
+            Log.e("Model", "fetchFoods() error", x)
+            errorMessage.value = "Server address unresolvable"
+        } catch (x: ClientRequestException) {
+            Log.e("Model", "fetchFoods() error", x)
+            handleClientRequestException(x)
+        }
+        return null
+    }
+/*
+    suspend fun getAllSupermarkets(): Collection<TandoorSupermarket>? =
+        cachedSupermarkets.takeIf { it.isNotEmpty() }?.toMap()?.values
+            ?: fetchSupermarkets()?.values*/
 
     @OptIn(ExperimentalSerializationApi::class)
     private suspend fun handleClientRequestException(x: ClientRequestException) {
@@ -120,8 +117,8 @@ class Model(dbDriver: DatabaseDriverFactory) {
         if (cached) {
             cachedRecipes[recipeId]?.let { return it }
         }
-        val apiUrl = apiUrl ?: return null
-        val apiToken = apiToken ?: return null
+        val apiUrl = settings.apiUrl ?: return null
+        val apiToken = settings.apiToken ?: return null
         try {
             return coroutineScope {
                 Log.e("Model", "fetchRecipe() calling api")
@@ -144,8 +141,8 @@ class Model(dbDriver: DatabaseDriverFactory) {
         if (cached) {
             cachedShoppingListRecipes[recipeId]?.let { return fetchRecipe(it.recipe, true) }
         }
-        val apiUrl = apiUrl ?: return null
-        val apiToken = apiToken ?: return null
+        val apiUrl = settings.apiUrl ?: return null
+        val apiToken = settings.apiToken ?: return null
         try {
             return coroutineScope {
                 Log.e("Model", "fetchRecipeFromShoppingList() calling api")
@@ -166,24 +163,22 @@ class Model(dbDriver: DatabaseDriverFactory) {
 
     suspend fun fetchShoppingList(): List<TandoorShoppingListEntry>? {
         Log.e("Model", "fetchShoppingList() entered")
-        val apiUrl = apiUrl ?: return null
-        val apiToken = apiToken ?: return null
+        val apiUrl = settings.apiUrl ?: return null
+        val apiToken = settings.apiToken ?: return null
         Log.e("Model", "fetchShoppingList() starting")
         try {
             return coroutineScope {
                 Log.e("Model", "fetchShoppingList() calling api")
-                api.fetchShoppingList(apiUrl, apiToken).also { list ->
-                    list.forEach { entry ->
-                        entry.list_recipe?.let { recipeId ->
-                            val recipe = fetchRecipeFromShoppingList(recipeId, true)
-                            entry.recipe = recipe
-                            if (recipe == null) {
-                                Log.e(
-                                    "Model", "Recipe $recipeId " +
-                                            "for shopping list entry ${entry.id} = ${entry.food.name} " +
-                                            "could not be loaded"
-                                )
-                            }
+                api.fetchShoppingList(apiUrl, apiToken).onEach { entry ->
+                    entry.list_recipe?.let { recipeId ->
+                        val recipe = fetchRecipeFromShoppingList(recipeId, true)
+                        entry.recipe = recipe
+                        if (recipe == null) {
+                            Log.e(
+                                "Model", "Recipe $recipeId " +
+                                        "for shopping list entry ${entry.id} = ${entry.food.name} " +
+                                        "could not be loaded"
+                            )
                         }
                     }
                 }
@@ -199,8 +194,8 @@ class Model(dbDriver: DatabaseDriverFactory) {
     }
 
     suspend fun updateShoppingListItemChecked(id: Int, checked: Boolean) {
-        val apiUrl = apiUrl ?: return
-        val apiToken = apiToken ?: return
+        val apiUrl = settings.apiUrl ?: return
+        val apiToken = settings.apiToken ?: return
         return withContext(errorHandler) {
             coroutineScope {
                 api.updateShoppingListItemChecked(apiUrl, apiToken, id, checked)
@@ -209,8 +204,8 @@ class Model(dbDriver: DatabaseDriverFactory) {
     }
 
     suspend fun updateShoppingListItemChecked(entry: TandoorShoppingListEntry) {
-        val apiUrl = apiUrl ?: return
-        val apiToken = apiToken ?: return
+        val apiUrl = settings.apiUrl ?: return
+        val apiToken = settings.apiToken ?: return
         return withContext(errorHandler) {
             api.updateShoppingListItemChecked(apiUrl, apiToken, entry)
         }

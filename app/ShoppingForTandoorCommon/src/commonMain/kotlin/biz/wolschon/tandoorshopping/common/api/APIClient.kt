@@ -50,6 +50,17 @@ class APIClient {
         return result
     }
 
+    suspend fun fetchSupermarkets(baseurl: String, accessToken: String): List<TandoorSupermarket> {
+        Log.i("APIClient", "fetchSupermarkets() HttpClient")
+        val result =  getHttpClient().get<List<TandoorSupermarket>> {
+            url("$baseurl/supermarket/")
+            contentType(ContentType.Application.Json)
+            header("Authorization", "Token $accessToken")
+        }
+        Log.i("APIClient", "fetchSupermarkets() HttpClient returned")
+        return result
+    }
+
     @Serializable
     data class ShoppingListEntryUpdate(val id: Int, val checked: Boolean)
 
