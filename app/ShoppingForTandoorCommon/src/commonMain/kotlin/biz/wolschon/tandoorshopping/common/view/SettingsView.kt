@@ -12,7 +12,7 @@ import biz.wolschon.tandoorshopping.common.model.SettingsModel
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
-fun SettingsPage(settings: SettingsModel, errorMessage: MutableStateFlow<String?>) {
+fun SettingsView(settings: SettingsModel, errorMessage: MutableStateFlow<String?>) {
     var baseUrlState by remember { mutableStateOf(settings.baseUrl ?: Model.defaultBaseURL) }//model.baseUrlLive.collectAsState(initial = Model.defaultBaseURL)
     val apiTokenState = settings.apiTokenLive.collectAsState(initial = "")
 

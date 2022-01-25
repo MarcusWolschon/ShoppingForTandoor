@@ -2,10 +2,7 @@
 package biz.wolschon.tandoorshopping.common.model
 
 import biz.wolschon.tandoorshopping.common.DatabaseDriverFactory
-import biz.wolschon.tandoorshopping.common.api.model.TandoorFood
-import biz.wolschon.tandoorshopping.common.api.model.TandoorFoodId
-import biz.wolschon.tandoorshopping.common.api.model.TandoorSupermarket
-import biz.wolschon.tandoorshopping.common.api.model.TandoorSupermarketId
+import biz.wolschon.tandoorshopping.common.api.model.*
 import biz.wolschon.tandoorshopping.common.model.db.AppDatabase
 import biz.wolschon.tandoorshopping.common.platformJson
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -21,6 +18,35 @@ class DatabaseModel(dbDriver: DatabaseDriverFactory) {
     internal fun createSettingsModel() = SettingsModel(database.settingsQueries)
 
     ////////////////////////////////////////////////////////////////////////////
+    // region ShoppingListEntries
+    @OptIn(ExperimentalSerializationApi::class)
+    private val cachedShoppingListEntries = mutableMapOf<TandoorShoppingListEntryId, TandoorShoppingListEntry>().also { cache ->
+        database.shoppingListEntriesQueries.getAllShoppingListEntries().executeAsList().forEach {
+            val market = platformJson.decodeFromString<TandoorShoppingListEntry>(it)
+            cache[market.id] = market
+        }
+    }
+
+    fun getCachedShoppingListEntries() = cachedShoppingListEntries.values.toList()
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun saveShoppingListEntries(list: Collection<TandoorShoppingListEntry>): Map<TandoorShoppingListEntryId, TandoorShoppingListEntry>  {
+        cachedShoppingListEntries.clear()
+        list.forEach { cachedShoppingListEntries[it.id] = it }
+        database.shoppingListEntriesQueries.deleteAllShoppingListEntries()
+        list.forEach {
+            database.shoppingListEntriesQueries.insertShoppingListEntry(
+                it.id.toLong(),
+                it.food.name,
+                platformJson.encodeToString(it)
+            )
+        }
+
+        return cachedShoppingListEntries.toMap()
+    }
+    // endregion
+
+    ////////////////////////////////////////////////////////////////////////////
     // region supermarkets
     @OptIn(ExperimentalSerializationApi::class)
     private val cachedSupermarkets = mutableMapOf<TandoorSupermarketId, TandoorSupermarket>().also { cache ->
@@ -32,6 +58,7 @@ class DatabaseModel(dbDriver: DatabaseDriverFactory) {
 
     fun getCachedSupermarkets() = cachedSupermarkets.values.toList()
 
+    @OptIn(ExperimentalSerializationApi::class)
     fun saveSupermarkets(list: Collection<TandoorSupermarket>): Map<TandoorSupermarketId, TandoorSupermarket>  {
         cachedSupermarkets.clear()
         list.forEach { cachedSupermarkets[it.id] = it }
@@ -60,6 +87,7 @@ class DatabaseModel(dbDriver: DatabaseDriverFactory) {
 
     fun getCachedFoods() = cachedFoods.values.toList()
 
+    @OptIn(ExperimentalSerializationApi::class)
     fun saveFoods(list: Collection<TandoorFood>) {
         cachedFoods.clear()
         list.forEach { cachedFoods[it.id] = it }

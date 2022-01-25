@@ -1,0 +1,8 @@
+-- update FROM schema 3 to schema 4
+
+
+CREATE TABLE IF NOT EXISTS  ShoppingListEntries (
+    id INTEGER NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    json TEXT NOT NULL
+);

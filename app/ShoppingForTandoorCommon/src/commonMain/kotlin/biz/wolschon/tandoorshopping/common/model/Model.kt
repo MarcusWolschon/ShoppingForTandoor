@@ -169,7 +169,8 @@ class Model(dbDriver: DatabaseDriverFactory) {
         try {
             return coroutineScope {
                 Log.e("Model", "fetchShoppingList() calling api")
-                api.fetchShoppingList(apiUrl, apiToken).onEach { entry ->
+                val allEntries = api.fetchShoppingList(apiUrl, apiToken)
+                allEntries.forEach{ entry ->
                     entry.list_recipe?.let { recipeId ->
                         val recipe = fetchRecipeFromShoppingList(recipeId, true)
                         entry.recipe = recipe
@@ -182,6 +183,8 @@ class Model(dbDriver: DatabaseDriverFactory) {
                         }
                     }
                 }
+                databaseModel.saveShoppingListEntries(allEntries)
+                databaseModel.getCachedShoppingListEntries()
             }
         } catch (x: UnresolvedAddressException) {
             Log.e("Model", "fetchShoppingList() error", x)

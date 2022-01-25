@@ -13,30 +13,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import biz.wolschon.tandoorshopping.common.api.model.TandoorFood
-import biz.wolschon.tandoorshopping.common.api.model.TandoorFood.SortById
-import biz.wolschon.tandoorshopping.common.api.model.TandoorFood.SortByCategory
-import biz.wolschon.tandoorshopping.common.api.model.TandoorFood.SortByName
-import biz.wolschon.tandoorshopping.common.api.model.TandoorSupermarketCategory
+import biz.wolschon.tandoorshopping.common.api.model.TandoorSupermarket
+import biz.wolschon.tandoorshopping.common.api.model.TandoorSupermarket.SortById
+import biz.wolschon.tandoorshopping.common.api.model.TandoorSupermarket.SortByName
 import java.util.*
 import kotlin.Comparator
 
 @Composable
-fun foodListView(
-    foods: List<TandoorFood>,
+fun shopListView(
+    shops: List<TandoorSupermarket>,
     showID: Boolean = false,
-    onFoodSelected: (TandoorFood) -> Unit
+    onShopSelected: (TandoorSupermarket) -> Unit
 ) {
 
     // state to be remembered
 
     var sarchFor by remember { mutableStateOf("") }
-    var lastSorting by remember { mutableStateOf<Comparator<TandoorFood>>(SortByCategory()) }
+    var lastSorting by remember { mutableStateOf<Comparator<TandoorSupermarket>>(SortByName()) }
 
     // common layout data
 
     val idModifier = Modifier.width(48.dp)
-    val categoryModifier = Modifier.width(100.dp)
     val nameModifier = Modifier.fillMaxWidth()
 
     /**
@@ -57,40 +54,14 @@ fun foodListView(
                 }
             }
             Button(onClick = {
-                lastSorting = if ((lastSorting as? SortByCategory)?.inverted == false) {
-                    SortByCategory(inverted = true)
+                lastSorting = if ((lastSorting as? SortByName)?.inverted == false) {
+                    SortByName(inverted = true)
                 } else {
-                    SortByCategory()
+                    SortByName()
                 }
-            }, categoryModifier) {
-                Text("category")
+            }, nameModifier) {
+                Text("name")
             }
-            Button(
-                onClick = {
-                    lastSorting = if ((lastSorting as? SortByName)?.inverted == false) {
-                        SortByName(inverted = true)
-                    } else {
-                        SortByName()
-                    }
-                }, nameModifier
-            ) {
-                Text(
-                    "name"
-                )
-            }
-        }
-    }
-
-    /**
-     * Render a header for a new category
-     */
-    @Composable
-    fun foodListCategory(foodCategory: TandoorSupermarketCategory) {
-        Row(modifier = Modifier.fillMaxWidth()) {
-            if (showID) {
-                Spacer(idModifier)
-            }
-            Text(foodCategory.name)
         }
     }
 
@@ -98,17 +69,18 @@ fun foodListView(
      * Render a row of data
      */
     @Composable
-    fun foodListItemView(
-        foodEntry: TandoorFood,
-        onFoodSelected: (TandoorFood) -> Unit
+    fun shopListItemView(
+        shopEntry: TandoorSupermarket,
+        onShopSelected: (TandoorSupermarket) -> Unit
     ) {
         Row(modifier = Modifier.fillMaxWidth()
-            .clickable { onFoodSelected.invoke(foodEntry) }) {
+            .clickable { onShopSelected.invoke(shopEntry) }
+        ) {
             if (showID) {
-                Text("${foodEntry.id}", idModifier)
+                Text("${shopEntry.id}", idModifier)
             }
             Text(
-                foodEntry.name,
+                shopEntry.name,
                 nameModifier.align(Alignment.CenterVertically),
                 textAlign = TextAlign.End,
                 textDecoration = TextDecoration.Underline,
@@ -122,7 +94,7 @@ fun foodListView(
     val locale = Locale.getDefault()
     val searchTemp = sarchFor.lowercase(locale)
 
-    val items: List<TandoorFood> = foods
+    val items: List<TandoorSupermarket> = shops
         .filter { it.name.lowercase(locale).contains(searchTemp) }
         .sortedWith(lastSorting)
 
@@ -142,10 +114,7 @@ fun foodListView(
                 1 -> foodListItemHeader()
                 else -> {
                     val item = items[index - 2]
-                    if (index == 2 || items[index - 3].safeCategoryId != item.safeCategoryId) {
-                        item.supermarket_category?.let { foodListCategory(it) }
-                    }
-                    foodListItemView(item, onFoodSelected)
+                    shopListItemView(item, onShopSelected)
                 }
             }
 

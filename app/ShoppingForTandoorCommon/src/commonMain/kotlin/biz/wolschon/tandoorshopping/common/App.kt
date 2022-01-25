@@ -1,30 +1,27 @@
 package biz.wolschon.tandoorshopping.common
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.Text
-import androidx.compose.material.Button
-import androidx.compose.material.Checkbox
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import biz.wolschon.tandoorshopping.common.api.model.TandoorFood
-import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry
-import biz.wolschon.tandoorshopping.common.api.model.TandoorSupermarket
 import biz.wolschon.tandoorshopping.common.model.Model
-import biz.wolschon.tandoorshopping.common.view.*
+import biz.wolschon.tandoorshopping.common.page.*
 import io.ktor.client.features.*
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-private enum class Pages { LIST, FOODS, FOOD, SETTINGS }
+private enum class TopLevelPages(val title: String, val page: Page) {
+    LIST("Shopping List", ShoppingListPage()),
+    FOODS("Foods", FoodsPage()),
+    SHOPS("Shops", ShopsPage()),
+    SETTINGS("⚙ Settings", SettingsPage())
+}
 
 @Composable
 fun App(model: Model) {
@@ -32,22 +29,18 @@ fun App(model: Model) {
     val platformContext = getPlatformContext()
     val errorMessage = model.errorMessage.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
-    var pageToShow by remember { mutableStateOf(Pages.LIST) }
-    var showChecked by remember { mutableStateOf(false) }
-    var currentFood by remember { mutableStateOf<TandoorFood?>(null) }
-    var shoppingList by remember { mutableStateOf<List<TandoorShoppingListEntry>?>(null) }
-    var allFoods by remember { mutableStateOf(model.databaseModel.getCachedFoods()) }
-    var allSupermarkets by remember { mutableStateOf(model.databaseModel.getCachedSupermarkets()) }
-    var currentSupermarket by remember { mutableStateOf<TandoorSupermarket?>(null) }
+    var currentPage by remember { mutableStateOf(TopLevelPages.LIST.page) }
+
+    val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
 
     // pages
-    Log.d("App", "App recomposing pageToShow=$pageToShow")
+    Log.d("App", "App recomposing currentPage=${currentPage.title}")
 
     val errorHandler = CoroutineExceptionHandler { _, throwable ->
         Log.e("App", "NetworkDispatcher got", throwable)
         //if (throwable is UnresolvedAddressException) {
-            //model.baseUrl = null
+        //model.baseUrl = null
         //}
         if (throwable is ClientRequestException) {
             model.settings.apiToken = null
@@ -59,26 +52,17 @@ fun App(model: Model) {
         GlobalScope.launch(NetworkDispatcher + errorHandler) {
             Log.i("App", "refresh starting")
             try {
-                model.fetchShoppingList()?.let { entries ->
-                    Log.i("App", "refresh - fetchShoppingList success")
-                    shoppingList = entries
-                } ?: Log.e("App", "refresh - fetchShoppingList failed")
+                model.fetchShoppingList()
                 if (model.errorMessage.value == null) {
                     Log.i("App", "refresh - fetchFoods starting")
-                    model.fetchFoods()?.let { list ->
-                        Log.i("App", "refresh - fetchFoods done")
-                        allFoods = list
-                    }
+                    model.fetchFoods()
                     Log.i("App", "refresh done")
                 }
-            if (model.errorMessage.value == null) {
-                Log.i("App", "refresh - fetchSupermarkets starting")
-                model.fetchSupermarkets()?.let { list ->
-                    Log.i("App", "refresh - fetchSupermarkets done")
-                    allSupermarkets = list.values.toList()
+                if (model.errorMessage.value == null) {
+                    Log.i("App", "refresh - fetchSupermarkets starting")
+                    model.fetchSupermarkets()
+                    Log.i("App", "refresh done")
                 }
-                Log.i("App", "refresh done")
-            }
             } finally {
                 Log.i("App", "refresh finally")
                 isRefreshing = false
@@ -88,144 +72,143 @@ fun App(model: Model) {
 
     if (model.settings.settingsIncomplete) {
         Log.i("App", "settings incomplete, forcing settings page")
-        pageToShow = Pages.SETTINGS
-    } else if (shoppingList == null && errorMessage.value == null) {
-        if (model.errorMessage.value == null && !isRefreshing)  {
+        currentPage = TopLevelPages.SETTINGS.page
+    } else if (model.databaseModel.getCachedShoppingListEntries().isEmpty() && errorMessage.value == null) {
+        if (model.errorMessage.value == null && !isRefreshing) {
             Log.i("App", "initial refresh")
             refresh.invoke()
         }
     }
 
-    fun updateFoodEntry(foodItem: TandoorShoppingListEntry, checked: Boolean) {
-        scope.launch(NetworkDispatcher) {
-            model.updateShoppingListItemChecked(foodItem.id, checked)
-            //model.updateShoppingListItemChecked(foodItem.copy(checked = checked))
-            model.fetchShoppingList()?.let { entries ->
-                shoppingList = entries
-            }
-        }
-    }
 
-    Column {
-        // top level bar
-        Row {
-            Button(
-                enabled = !model.settings.settingsIncomplete && !isRefreshing,
-                onClick = {
-                    Log.i("App", "[refresh] tapped")
-                    refresh.invoke()
-                }) {
-                Text("\uD83D\uDDD8")
+
+    Scaffold(
+        scaffoldState = scaffoldState,
+        drawerContent = {
+            // Drawer header
+
+            Text("Shopping for Tandoor", modifier = Modifier.padding(16.dp))
+
+            Divider()
+
+            // Drawer items
+
+            TopLevelPages.values().forEach { menuEntry ->
+                Button(
+                    enabled = currentPage != menuEntry.page,
+                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                    onClick = {
+                        Log.i("App", "[${menuEntry.title}] tapped")
+                        currentPage = menuEntry.page
+                        scope.launch { scaffoldState.drawerState.close() }
+                    }) {
+                    Text(menuEntry.title)
+                }
             }
 
-            Button(
-                enabled = pageToShow != Pages.LIST && shoppingList != null,
+/*            Button(
+                enabled = currentPage != TopLevelPages.LIST.page &&
+                        model.databaseModel.getCachedShoppingListEntries().isNotEmpty(),
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
                 onClick = {
                     Log.i("App", "[list] tapped")
-                    pageToShow = Pages.LIST
+                    currentTopLevelPage = TopLevelPages.LIST
+                    currentPage = currentTopLevelPage.page
                 }) {
-                Text("shopping lists")
+                Text(TopLevelPages.LIST.title)
             }
 
             Button(
-                enabled = pageToShow != Pages.FOODS,
+                enabled = currentTopLevelPage != TopLevelPages.FOODS,
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
                 onClick = {
                     Log.i("App", "[foods] tapped")
-                    pageToShow = Pages.FOODS
+                    currentTopLevelPage = TopLevelPages.FOODS
+                    currentPage = currentTopLevelPage.page
                 }) {
-                Text("foods")
+                Text(TopLevelPages.FOODS.title)
             }
 
-            Spacer(Modifier.fillMaxWidth().weight(2f))
+            Divider()
 
             Button(
                 //always enabled //enabled = pageToShow != Pages.SETTINGS,
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
                 onClick = {
                     Log.i("App", "[settings] tapped")
-                    pageToShow = if (pageToShow == Pages.SETTINGS) Pages.LIST else Pages.SETTINGS
-                },
-                modifier = Modifier.weight(1f)
+                    currentTopLevelPage = if (currentTopLevelPage == TopLevelPages.SETTINGS) TopLevelPages.LIST else TopLevelPages.SETTINGS
+                    currentPage = currentTopLevelPage.page
+                }
             ) {
-                Text("⚙")
-            }
-        }
-
-        errorMessage.value?.let { error ->
-            Row(Modifier.background(Color.Red).fillMaxWidth()) {
-                Text(text = error, color = Color.White, maxLines = 3)
-            }
-        }
-
-        if (isRefreshing) {
-            Row(Modifier.background(Color.Yellow).fillMaxWidth()) {
-                Text(text = "loading...", color = Color.Black)
-            }
-        }
-
-        when (pageToShow) {
-            Pages.SETTINGS -> SettingsPage(model.settings, model.errorMessage)
-
-            Pages.LIST -> shoppingList?.let {
-                Text(
-                    "Shopping list",
-                    fontSize = 20.sp,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-                Row {
-                    Checkbox(checked = showChecked, onCheckedChange = { checked -> showChecked = checked })
-                    Text("show checked foods", Modifier.align(CenterVertically))
-                }
-                allSupermarkets.forEach { market ->
-                    Row {
-                        Checkbox(checked = (currentSupermarket?.id == market.id),
-                            onCheckedChange = { checked ->
-                                if (checked && currentSupermarket?.id != market.id) {
-                                    currentSupermarket = market
-                                }
-                            })
-                        Text(market.name, Modifier.align(CenterVertically))
+                Text(TopLevelPages.SETTINGS.title)
+            }*/
+        },
+        floatingActionButton = {
+            if (!model.settings.settingsIncomplete && !isRefreshing) {
+                ExtendedFloatingActionButton(
+                    text = { Text("\uD83D\uDDD8 Refresh") },
+                    onClick = {
+                        Log.i("App", "[refresh] tapped")
+                        refresh.invoke()
                     }
-                }
-                shoppingListView(
-                    entries = it,
-                    showFinished = showChecked,
-                    showID = false,
-                    currentSupermarket,
-                    onFoodCheckedChanged =  { foodItem, checked -> updateFoodEntry(foodItem, checked) },
-                    onFoodSelected = { food ->
-                        currentFood = food
-                        pageToShow = Pages.FOOD
-                    },
-                    onRecipeClicked = { recipeId, recipe ->
-                        (recipeId ?: recipe?.id)?.let { rId ->
-                            model.settings.baseUrl?.let { baseUrl ->
-                                openBrowser(platformContext, "$baseUrl/view/recipe/$rId")
+
+                )
+            }
+        }
+
+    ) {
+
+
+        Column {
+            // top level bar
+            Row {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            scaffoldState.drawerState.apply {
+                                if (isClosed) open() else close()
                             }
                         }
+                    },
+                    Modifier.height(48.dp).width(48.dp)
+                ) {
+                    Text("<")
+                }
 
+                if (isRefreshing) {
+                    Row(Modifier.background(Color.Yellow).fillMaxWidth().height(48.dp),
+                    ) {
+                        Text(text = "loading...",
+                            color = Color.Black,
+                            modifier = Modifier
+                                .align(CenterVertically)
+                                .padding(horizontal = 16.dp, vertical = 0.dp)
+                        )
                     }
-                )
-            }
-
-            Pages.FOODS -> {
-                Text(
-                    "All foods:",
-                    fontSize = 20.sp,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-                foodListView(foods = allFoods, showID = true) { food ->
-                    currentFood = food
-                    pageToShow = Pages.FOOD
+                } else {
+                    Text(text = currentPage.title,
+                        color = Color.Black,
+                        fontSize = 20.sp,
+                        modifier = Modifier
+                            .align(CenterVertically)
+                            .padding(horizontal = 16.dp, vertical = 0.dp)
+                    )
                 }
             }
 
-            Pages.FOOD -> currentFood?.let {
-                Text(
-                    "selected food:",
-                    fontSize = 20.sp,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-                foodDetailsView(it)
+            // error messages below level bar
+
+            errorMessage.value?.let { error ->
+                Row(Modifier.background(Color.Red).fillMaxWidth()) {
+                    Text(text = error, color = Color.White, maxLines = 3)
+                }
+            }
+
+            // main content area
+            //TODO Column(Modifier.verticalScroll(contentAreaScrollState, true)) {
+
+            currentPage.compose(model, platformContext) { destination ->
+                currentPage = destination
             }
         }
     }

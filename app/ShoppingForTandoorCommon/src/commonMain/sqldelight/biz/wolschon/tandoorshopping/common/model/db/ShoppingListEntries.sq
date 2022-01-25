@@ -1,0 +1,14 @@
+
+
+
+CREATE TABLE IF NOT EXISTS  ShoppingListEntries (
+    id INTEGER NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    json TEXT NOT NULL
+);
+insertShoppingListEntry: INSERT INTO ShoppingListEntries(id, name, json) VALUES(?, ?, ?);
+deleteAllShoppingListEntries: DELETE FROM ShoppingListEntries;
+deleteShoppingListEntry: DELETE FROM ShoppingListEntries WHERE id = ?;
+getShoppingListEntry: SELECT json FROM ShoppingListEntries WHERE id = ?;
+getAllShoppingListEntries: SELECT json FROM ShoppingListEntries;
+replaceShoppingListEntry: INSERT OR REPLACE INTO ShoppingListEntries(id, name, json) VALUES(?, ?, ?);
