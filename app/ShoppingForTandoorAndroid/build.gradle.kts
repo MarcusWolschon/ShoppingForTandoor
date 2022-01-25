@@ -72,8 +72,8 @@ android {
         //activity = "MainActivity"
         minSdk = getSafeRootProperty("minSdk", 26)
         targetSdk =  getSafeRootProperty("targetSdk", 30)
-        versionCode = 5
-        versionName = "0.0.5"
+        versionCode = 10
+        versionName = "v0.1.0"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
