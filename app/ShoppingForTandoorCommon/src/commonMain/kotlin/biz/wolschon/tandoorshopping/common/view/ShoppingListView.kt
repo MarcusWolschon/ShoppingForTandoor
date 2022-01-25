@@ -29,7 +29,7 @@ fun shoppingListView(entries: List<TandoorShoppingListEntry>,
                      currentSupermarket: TandoorSupermarket?,
                      onFoodCheckedChanged: (TandoorShoppingListEntry, Boolean) -> Unit,
                      onFoodSelected: (TandoorFood) -> Unit,
-                     onRecipeClicked: (Int?, TandoorRecipe?) -> Unit) {
+                     onRecipeClicked: (ShopppingListRecipeId?, TandoorRecipeMealplan?) -> Unit) {
 
     // state to be remembered
 
@@ -43,8 +43,8 @@ fun shoppingListView(entries: List<TandoorShoppingListEntry>,
     val idModifier = Modifier.width(48.dp)
     val checkedModifier = Modifier.width(65.dp)
     val categoryModifier = Modifier.width(100.dp)
-    val amountModifier = Modifier.width(32.dp)
-    val unitModifier = Modifier.width(48.dp)
+    val amountModifier = Modifier.width(48.dp)
+    val unitModifier = Modifier.width(64.dp)
     val nameModifier = Modifier.fillMaxWidth()
     val receiptModifier = Modifier.width(100.dp)
 
@@ -112,9 +112,10 @@ fun shoppingListView(entries: List<TandoorShoppingListEntry>,
      * Render a header for a new category
      */
     @Composable
-    fun shoppingListRecipe(recipeId: Int?,
-                           recipe: TandoorRecipe?,
-                           onRecipeClicked: (Int?, TandoorRecipe?) -> Unit) {
+    fun shoppingListRecipe(
+        recipeId: ShopppingListRecipeId?,
+        recipe: TandoorRecipeMealplan?,
+        onRecipeClicked: (ShopppingListRecipeId?, TandoorRecipeMealplan?) -> Unit) {
         Row(modifier = Modifier.fillMaxWidth()
             .background(Color.LightGray)
             .clickable {
@@ -217,7 +218,7 @@ fun shoppingListView(entries: List<TandoorShoppingListEntry>,
                     val item = items[index - 1]
                     if (lastSorting is SortByRecipe) {
                         if (index == 1 || items[index - 2].list_recipe != item.list_recipe) {
-                            shoppingListRecipe(item.list_recipe, item.recipe, onRecipeClicked)
+                            shoppingListRecipe(item.list_recipe, item.recipe_mealplan, onRecipeClicked)
                         }
                     }
                     val category = item.food.supermarket_category

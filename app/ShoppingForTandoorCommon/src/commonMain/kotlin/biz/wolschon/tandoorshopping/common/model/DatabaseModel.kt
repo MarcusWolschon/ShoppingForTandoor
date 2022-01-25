@@ -5,6 +5,10 @@ import biz.wolschon.tandoorshopping.common.DatabaseDriverFactory
 import biz.wolschon.tandoorshopping.common.api.model.*
 import biz.wolschon.tandoorshopping.common.model.db.AppDatabase
 import biz.wolschon.tandoorshopping.common.platformJson
+import com.squareup.sqldelight.runtime.coroutines.asFlow
+import com.squareup.sqldelight.runtime.coroutines.mapToList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -28,6 +32,16 @@ class DatabaseModel(dbDriver: DatabaseDriverFactory) {
     }
 
     fun getCachedShoppingListEntries() = cachedShoppingListEntries.values.toList()
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun getLiveShoppingListEntries() = database.shoppingListEntriesQueries
+        .getAllShoppingListEntries().asFlow()
+        .mapToList(Dispatchers.IO)
+        .map { list ->
+            list.map { entry ->
+                platformJson.decodeFromString<TandoorShoppingListEntry>(entry)
+            }
+        }
 
     @OptIn(ExperimentalSerializationApi::class)
     fun saveShoppingListEntries(list: Collection<TandoorShoppingListEntry>): Map<TandoorShoppingListEntryId, TandoorShoppingListEntry>  {

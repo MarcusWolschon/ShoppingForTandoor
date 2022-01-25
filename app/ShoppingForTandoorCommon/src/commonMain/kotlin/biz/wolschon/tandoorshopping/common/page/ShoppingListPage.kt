@@ -14,8 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import biz.wolschon.tandoorshopping.common.Log
 import biz.wolschon.tandoorshopping.common.NetworkDispatcher
 import biz.wolschon.tandoorshopping.common.PlatformContext
+import biz.wolschon.tandoorshopping.common.api.model.ShopppingListRecipeId
+import biz.wolschon.tandoorshopping.common.api.model.TandoorRecipeMealplan
 import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry
 import biz.wolschon.tandoorshopping.common.api.model.TandoorSupermarket
 import biz.wolschon.tandoorshopping.common.model.Model
@@ -27,15 +30,20 @@ import kotlinx.coroutines.launch
 class ShoppingListPage : Page() {
     override val title = "Shopping List"
 
-    fun updateFoodEntry(model: Model,
-                        foodItem: TandoorShoppingListEntry,
-                        checked: Boolean,
-                        scope: CoroutineScope) {
+    fun updateFoodEntry(
+        model: Model,
+        foodItem: TandoorShoppingListEntry,
+        checked: Boolean,
+        scope: CoroutineScope
+    ) {
 
         scope.launch(NetworkDispatcher) {
+            Log.d("ShoppingListPage", "updateShoppingListItemChecked")
             model.updateShoppingListItemChecked(foodItem.id, checked)
             //model.updateShoppingListItemChecked(foodItem.copy(checked = checked))
+            Log.d("ShoppingListPage", "fetchShoppingList")
             model.fetchShoppingList()
+            Log.d("ShoppingListPage", "fetchShoppingList done")
         }
     }
 
@@ -93,14 +101,18 @@ class ShoppingListPage : Page() {
     }
 
     @Composable
-    override fun compose(model: Model,
-                         platformContext: PlatformContext,
-                         navigateTo: (Page) -> Unit) {
+    override fun compose(
+        model: Model,
+        platformContext: PlatformContext,
+        navigateTo: (Page) -> Unit
+    ) {
+        Log.d("ShoppingListPage", "compose() called")
         var showChecked by remember { mutableStateOf(false) }
-
-        val shoppingList = model.databaseModel.getCachedShoppingListEntries()
-        var currentSupermarket by remember { mutableStateOf<TandoorSupermarket?>(null) }
         val scope = rememberCoroutineScope()
+        val shoppingList = model.databaseModel.getLiveShoppingListEntries()
+            .collectAsState(initial = model.databaseModel.getCachedShoppingListEntries())
+            .value
+        var currentSupermarket by remember { mutableStateOf<TandoorSupermarket?>(null) }
 
 
         Row {
@@ -117,19 +129,21 @@ class ShoppingListPage : Page() {
             showFinished = showChecked,
             showID = false,
             currentSupermarket,
-            onFoodCheckedChanged = { foodItem, checked -> updateFoodEntry(model, foodItem, checked, scope) },
+            onFoodCheckedChanged = { foodItem, checked ->
+                updateFoodEntry(model, foodItem, checked, scope)
+            },
             onFoodSelected = { food ->
                 navigateTo(FoodPage(food))
             },
-            onRecipeClicked = { recipeId, recipe ->
-                (recipeId ?: recipe?.id)?.let { rId ->
+            onRecipeClicked = { _: ShopppingListRecipeId?, recipe: TandoorRecipeMealplan? ->
+                recipe?.let { mealPlanRecipe ->
                     model.settings.baseUrl?.let { baseUrl ->
-                        openBrowser(platformContext, "$baseUrl/view/recipe/$rId")
+                        openBrowser(platformContext, "$baseUrl/view/recipe/${mealPlanRecipe.recipe}")
                     }
                 }
 
             }
         )
-
     }
+
 }

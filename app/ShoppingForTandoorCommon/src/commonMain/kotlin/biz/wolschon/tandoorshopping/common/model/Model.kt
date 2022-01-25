@@ -112,7 +112,7 @@ class Model(dbDriver: DatabaseDriverFactory) {
         }
     }
 
-    private val cachedRecipes = mutableMapOf<Int, TandoorRecipe>()
+/*    private val cachedRecipes = mutableMapOf<Int, TandoorRecipe>()
     private suspend fun fetchRecipe(recipeId: RecipeId, cached: Boolean): TandoorRecipe? {
         if (cached) {
             cachedRecipes[recipeId]?.let { return it }
@@ -134,9 +134,9 @@ class Model(dbDriver: DatabaseDriverFactory) {
             handleClientRequestException(x)
         }
         return null
-    }
+    }*/
 
-    private val cachedShoppingListRecipes = mutableMapOf<ShopppingListRecipeId, TandoorShoppingListRecipe>()
+/*    private val cachedShoppingListRecipes = mutableMapOf<ShopppingListRecipeId, TandoorShoppingListRecipe>()
     private suspend fun fetchRecipeFromShoppingList(recipeId: ShopppingListRecipeId, cached: Boolean): TandoorRecipe? {
         if (cached) {
             cachedShoppingListRecipes[recipeId]?.let { return fetchRecipe(it.recipe, true) }
@@ -159,7 +159,7 @@ class Model(dbDriver: DatabaseDriverFactory) {
             handleClientRequestException(x)
         }
         return null
-    }
+    }*/
 
     suspend fun fetchShoppingList(): List<TandoorShoppingListEntry>? {
         Log.e("Model", "fetchShoppingList() entered")
@@ -170,10 +170,10 @@ class Model(dbDriver: DatabaseDriverFactory) {
             return coroutineScope {
                 Log.e("Model", "fetchShoppingList() calling api")
                 val allEntries = api.fetchShoppingList(apiUrl, apiToken)
-                allEntries.forEach{ entry ->
-                    entry.list_recipe?.let { recipeId ->
-                        val recipe = fetchRecipeFromShoppingList(recipeId, true)
-                        entry.recipe = recipe
+                /*allEntries.forEach{ entry ->
+                    entry.recipe?.let { recipe ->
+                        //val recipe = fetchRecipeFromShoppingList(recipeId, true)
+                        //entry.recipe = recipe
                         if (recipe == null) {
                             Log.e(
                                 "Model", "Recipe $recipeId " +
@@ -182,7 +182,7 @@ class Model(dbDriver: DatabaseDriverFactory) {
                             )
                         }
                     }
-                }
+                }*/
                 databaseModel.saveShoppingListEntries(allEntries)
                 databaseModel.getCachedShoppingListEntries()
             }
@@ -206,11 +206,11 @@ class Model(dbDriver: DatabaseDriverFactory) {
         }
     }
 
-    suspend fun updateShoppingListItemChecked(entry: TandoorShoppingListEntry) {
+/*    suspend fun updateShoppingListItemChecked(entry: TandoorShoppingListEntry) {
         val apiUrl = settings.apiUrl ?: return
         val apiToken = settings.apiToken ?: return
         return withContext(errorHandler) {
             api.updateShoppingListItemChecked(apiUrl, apiToken, entry)
         }
-    }
+    }*/
 }
