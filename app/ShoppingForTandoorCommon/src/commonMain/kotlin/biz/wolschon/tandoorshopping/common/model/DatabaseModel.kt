@@ -73,6 +73,16 @@ class DatabaseModel(dbDriver: DatabaseDriverFactory) {
     fun getCachedSupermarkets() = cachedSupermarkets.values.toList()
 
     @OptIn(ExperimentalSerializationApi::class)
+    fun getLiveSupermarkets() = database.supermarketsQueries
+        .getAllSupermarkets().asFlow()
+        .mapToList(Dispatchers.IO)
+        .map { list ->
+            list.map { entry ->
+                platformJson.decodeFromString<TandoorSupermarket>(entry)
+            }
+        }
+
+    @OptIn(ExperimentalSerializationApi::class)
     fun saveSupermarkets(list: Collection<TandoorSupermarket>): Map<TandoorSupermarketId, TandoorSupermarket>  {
         cachedSupermarkets.clear()
         list.forEach { cachedSupermarkets[it.id] = it }
@@ -100,6 +110,16 @@ class DatabaseModel(dbDriver: DatabaseDriverFactory) {
     }
 
     fun getCachedFoods() = cachedFoods.values.toList()
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun getLiveFoods() = database.foodsQueries
+        .getAllFoods().asFlow()
+        .mapToList(Dispatchers.IO)
+        .map { list ->
+            list.map { entry ->
+                platformJson.decodeFromString<TandoorFood>(entry)
+            }
+        }
 
     @OptIn(ExperimentalSerializationApi::class)
     fun saveFoods(list: Collection<TandoorFood>) {

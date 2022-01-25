@@ -13,7 +13,9 @@ class FoodsPage: Page() {
     override fun compose(model: Model,
                          platformContext: PlatformContext,
                          navigateTo: (Page) -> Unit) {
-        val allFoods = model.databaseModel.getCachedFoods()
+        val allFoods = model.databaseModel.getLiveFoods()
+            .collectAsState(initial = model.databaseModel.getCachedFoods())
+            .value
 
         foodListView(foods = allFoods, showID = true) { food ->
             navigateTo(FoodPage(food))

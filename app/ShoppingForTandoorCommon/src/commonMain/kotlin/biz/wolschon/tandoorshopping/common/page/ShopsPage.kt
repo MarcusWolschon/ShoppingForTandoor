@@ -13,7 +13,9 @@ class ShopsPage: Page() {
     override fun compose(model: Model,
                          platformContext: PlatformContext,
                          navigateTo: (Page) -> Unit) {
-        val allShops = model.databaseModel.getCachedSupermarkets()
+        val allShops = model.databaseModel.getLiveSupermarkets()
+            .collectAsState(initial = model.databaseModel.getCachedSupermarkets())
+            .value
 
         shopListView(shops = allShops, showID = true) { shop ->
             navigateTo(ShopPage(shop))
