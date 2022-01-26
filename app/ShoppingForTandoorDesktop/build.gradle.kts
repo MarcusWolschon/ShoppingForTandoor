@@ -4,10 +4,15 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 plugins {
     kotlin("multiplatform")
     id("org.jetbrains.compose") // version defined in gradle.properties and read via settings.gradle.kts version
+    id("com.github.gmazzo.buildconfig") version "3.0.3"
 }
 
 group = "biz.wolschon.tandoorshopping"
-version = "1.0"
+version = "1.0.0"
+
+buildConfig {
+    buildConfigField("String", "APP_VERSION", provider { "\"${project.version}\"" })
+}
 
 kotlin {
     jvm {
@@ -43,8 +48,17 @@ compose.desktop {
         mainClass = "MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "jvm"
-            packageVersion = "1.0.0"
+            packageName = "ShoppingForTandoor"
+            packageVersion = project.version.toString()
+            //macOS {
+            //    iconFile.set(project.file("jvmMain/resources/favicon.icns"))
+            //}
+            windows {
+                iconFile.set(project.file("jvmMain/resources/favicon.ico"))
+            }
+            //linux {
+            //    iconFile.set(project.file("jvmMain/resources/favicon.png"))
+            //}
         }
     }
 }

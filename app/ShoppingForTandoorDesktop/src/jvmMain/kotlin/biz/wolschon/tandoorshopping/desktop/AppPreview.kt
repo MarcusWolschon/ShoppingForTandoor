@@ -4,6 +4,7 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
+import biz.wolschon.tandoorshopping.ShoppingForTandoorDesktop.BuildConfig
 import biz.wolschon.tandoorshopping.common.App
 import biz.wolschon.tandoorshopping.common.DatabaseDriverFactory
 import biz.wolschon.tandoorshopping.common.model.Model
@@ -15,5 +16,5 @@ fun AppPreview() {
     val modelState = remember { derivedStateOf { Model(DatabaseDriverFactory()) } }
     val model = modelState.value
 
-    App(model)
+    App(model, "Preview ${BuildConfig.APP_VERSION}")
 }

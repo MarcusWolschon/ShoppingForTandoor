@@ -27,7 +27,7 @@ private enum class TopLevelPages(val title: String,
 }
 
 @Composable
-fun App(model: Model) {
+fun App(model: Model, version: String) {
     // state
     val platformContext = getPlatformContext()
     val errorMessage = model.errorMessage.collectAsState()
@@ -90,7 +90,14 @@ fun App(model: Model) {
         drawerContent = {
             // Drawer header
 
-            Text("Shopping for Tandoor", modifier = Modifier.padding(16.dp))
+            Text("Shopping for Tandoor",
+                modifier = Modifier.padding(16.dp, 16.dp, 16.dp, bottom=8.dp),
+                fontSize = 16.sp
+            )
+            Text(version,
+                modifier = Modifier.padding(start =16.dp, bottom=16.dp),
+                fontSize = 12.sp
+            )
 
             Divider()
 
@@ -115,43 +122,6 @@ fun App(model: Model) {
                     Text(menuEntry.title)
                 }
             }
-
-/*            Button(
-                enabled = currentPage != TopLevelPages.LIST.page &&
-                        model.databaseModel.getCachedShoppingListEntries().isNotEmpty(),
-                modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                onClick = {
-                    Log.i("App", "[list] tapped")
-                    currentTopLevelPage = TopLevelPages.LIST
-                    currentPage = currentTopLevelPage.page
-                }) {
-                Text(TopLevelPages.LIST.title)
-            }
-
-            Button(
-                enabled = currentTopLevelPage != TopLevelPages.FOODS,
-                modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                onClick = {
-                    Log.i("App", "[foods] tapped")
-                    currentTopLevelPage = TopLevelPages.FOODS
-                    currentPage = currentTopLevelPage.page
-                }) {
-                Text(TopLevelPages.FOODS.title)
-            }
-
-            Divider()
-
-            Button(
-                //always enabled //enabled = pageToShow != Pages.SETTINGS,
-                modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                onClick = {
-                    Log.i("App", "[settings] tapped")
-                    currentTopLevelPage = if (currentTopLevelPage == TopLevelPages.SETTINGS) TopLevelPages.LIST else TopLevelPages.SETTINGS
-                    currentPage = currentTopLevelPage.page
-                }
-            ) {
-                Text(TopLevelPages.SETTINGS.title)
-            }*/
         },
         floatingActionButton = {
             if (!model.settings.settingsIncomplete && !isRefreshing) {
