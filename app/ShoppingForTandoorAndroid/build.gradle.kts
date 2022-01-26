@@ -5,7 +5,8 @@ plugins {
 }
 
 group = "biz.wolschon.tandoorshopping"
-version = "1.0"
+version = "v0.1.1"
+val projectVersionCode = 11
 
 
 dependencies {
@@ -72,8 +73,10 @@ android {
         //activity = "MainActivity"
         minSdk = getSafeRootProperty("minSdk", 26)
         targetSdk =  getSafeRootProperty("targetSdk", 30)
-        versionCode = 10
-        versionName = "v0.1.0"
+        versionCode = projectVersionCode
+        versionName = project.version.toString()
+
+        buildConfigField( "String", "VERSION_NAME", "\"${ project.version}\"")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -89,6 +92,10 @@ android {
         getByName("debug") {
             signingConfig = signingConfigs.getByName("debug")
         }
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 }
 
