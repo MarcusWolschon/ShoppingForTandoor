@@ -32,7 +32,11 @@ kotlin {
         database("AppDatabase") {
             // Package name used for the generated AppDatabase.kt
             packageName = "biz.wolschon.tandoorshopping.common.model.db"
-            version = 1
+            version = 4
+            //WARNING: When increasing the version number,
+            // be sure to manually create an SQL file
+            // src\commonMain\sqldelight\biz\wolschon\tandoorshopping\common\model\db\<previous version>.sqm
+
 
             // An array of folders where the plugin will read your '.sq' and '.sqm'
             // files. The folders are relative to the existing source set so if you

@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
                 val context = LocalContext.current
                 val model = remember { derivedStateOf { Model(DatabaseDriverFactory(context)) } }
                 //TODO use Jetpack Navigation val navController = rememberNavController()
-                App(model.value)
+                App(model.value, BuildConfig.VERSION_NAME)
             }
         }
     }

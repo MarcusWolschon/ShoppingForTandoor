@@ -29,6 +29,11 @@ actual class PlatformContext
 @Composable
 actual fun getPlatformContext() =  PlatformContext()
 
+actual val platformJson = Json(KotlinxSerializer.DefaultJson) {
+    isLenient = true
+    ignoreUnknownKeys = true
+}
+
 actual fun openBrowser(platformContext: PlatformContext, url: String) {
     if (!Desktop.isDesktopSupported()) {
         return
@@ -54,10 +59,7 @@ actual fun getHttpClient(): HttpClient =
         install(Auth) {
         }
         install(JsonFeature) {
-            serializer = KotlinxSerializer(Json(KotlinxSerializer.DefaultJson) {
-                isLenient = true
-                ignoreUnknownKeys = true
-            })
+            serializer = KotlinxSerializer(platformJson)
         }
         install(Logging) {
             level = LogLevel.HEADERS

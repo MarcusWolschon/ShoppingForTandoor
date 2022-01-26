@@ -8,6 +8,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import biz.wolschon.tandoorshopping.ShoppingForTandoorDesktop.BuildConfig
 import biz.wolschon.tandoorshopping.common.DatabaseDriverFactory
 import biz.wolschon.tandoorshopping.common.model.Model
 
@@ -28,7 +29,7 @@ fun main() = application {
             val modelState = remember { derivedStateOf { Model(DatabaseDriverFactory()) } }
             val model = modelState.value
 
-            App(model)
+            App(model, BuildConfig.APP_VERSION)
         }
     }
 }

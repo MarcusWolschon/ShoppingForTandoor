@@ -12,5 +12,5 @@ fun DesktopApplicationPreview() {
     val modelState = remember { derivedStateOf { Model(DatabaseDriverFactory()) } }
     val model = modelState.value
 
-    App(model)
+    App(model, "preview")
 }

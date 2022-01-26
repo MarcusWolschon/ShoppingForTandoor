@@ -1,3 +1,4 @@
+@file:Suppress("EXPERIMENTAL_IS_NOT_ENABLED", "PLUGIN_IS_NOT_ENABLED")
 package biz.wolschon.tandoorshopping.common.api
 
 import biz.wolschon.tandoorshopping.common.Log
@@ -38,14 +39,25 @@ class APIClient {
             header("Authorization", "Token $accessToken")
         }
 
-    suspend fun fetchShoppingLists(baseurl: String, accessToken: String): List<TandoorShoppingList> {
+    suspend fun fetchShoppingList(baseurl: String, accessToken: String): List<TandoorShoppingListEntry> {
         Log.i("APIClient", "fetchShoppingLists() HttpClient")
-        val result =  getHttpClient().get<List<TandoorShoppingList>> {
-            url("$baseurl/shopping-list/")
+        val result =  getHttpClient().get<List<TandoorShoppingListEntry>> {
+            url("$baseurl/shopping-list-entry/")
             contentType(ContentType.Application.Json)
             header("Authorization", "Token $accessToken")
         }
         Log.i("APIClient", "fetchShoppingLists() HttpClient returned")
+        return result
+    }
+
+    suspend fun fetchSupermarkets(baseurl: String, accessToken: String): List<TandoorSupermarket> {
+        Log.i("APIClient", "fetchSupermarkets() HttpClient")
+        val result =  getHttpClient().get<List<TandoorSupermarket>> {
+            url("$baseurl/supermarket/")
+            contentType(ContentType.Application.Json)
+            header("Authorization", "Token $accessToken")
+        }
+        Log.i("APIClient", "fetchSupermarkets() HttpClient returned")
         return result
     }
 

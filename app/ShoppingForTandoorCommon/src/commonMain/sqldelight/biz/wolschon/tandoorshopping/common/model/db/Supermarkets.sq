@@ -1,0 +1,14 @@
+
+
+
+CREATE TABLE IF NOT EXISTS  Supermarkets (
+    id INTEGER NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    json TEXT NOT NULL
+);
+insertSupermarket: INSERT INTO Supermarkets(id, name, json) VALUES(?, ?, ?);
+deleteAllSupermarkets: DELETE FROM Supermarkets;
+deleteSupermarket: DELETE FROM Supermarkets WHERE id = ?;
+getSupermarket: SELECT json FROM Supermarkets WHERE id = ?;
+getAllSupermarkets: SELECT json FROM Supermarkets;
+replaceSupermarket: INSERT OR REPLACE INTO Supermarkets(id, name, json) VALUES(?, ?, ?);

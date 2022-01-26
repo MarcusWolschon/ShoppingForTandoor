@@ -1,0 +1,14 @@
+
+
+
+CREATE TABLE IF NOT EXISTS  Foods (
+    id INTEGER NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    json TEXT NOT NULL
+);
+insertFood: INSERT INTO Foods(id, name, json) VALUES(?, ?, ?);
+deleteAllFoods: DELETE FROM Foods;
+deleteFood: DELETE FROM Foods WHERE id = ?;
+getFood: SELECT json FROM Foods WHERE id = ?;
+getAllFoods: SELECT json FROM Foods;
+replaceFood: INSERT OR REPLACE INTO Foods(id, name, json) VALUES(?, ?, ?);

@@ -1,66 +1,31 @@
+@file:Suppress("PLUGIN_IS_NOT_ENABLED")
 package biz.wolschon.tandoorshopping.common.api.model
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
-import java.math.BigDecimal
 
-@Serializable
-data class TandoorShoppingList (
-    val id: Int,
-    val uuid: String,
-    val note: String?,
-    //recipes
-    val entries: Set<TandoorShoppingListEntry>,
-    // "shared": [],
-    val finished: Boolean,
-    // "supermarket": null,
-    //        "created_by": 1,
-    //        "created_at": "2022-01-10T20:15:47.556349+01:00"
-) {
-
-    val sortedEntries
-        get() = entries.sortedBy { it.food.name }.sortedBy { it.food.safeCategoryName }
-
-    class SortById(val inverted: Boolean = false) : Comparator<TandoorShoppingList> {
-        override fun compare(a: TandoorShoppingList, b: TandoorShoppingList) =
-            if (inverted) {
-                b.id.compareTo(a.id)
-            } else {
-                a.id.compareTo(b.id)
-            }
-    }
-    class SortByFinished(val inverted: Boolean = false) : Comparator<TandoorShoppingList> {
-        override fun compare(a: TandoorShoppingList, b: TandoorShoppingList) =
-            if (inverted) {
-                b.finished.compareTo(a.finished)
-            } else {
-                a.finished.compareTo(b.finished)
-            }
-    }
-    class SortByNote(val inverted: Boolean = false) : Comparator<TandoorShoppingList> {
-        override fun compare(a: TandoorShoppingList, b: TandoorShoppingList) =
-            if (inverted) {
-                (b.note ?: "").compareTo(a.note ?: "")
-            } else {
-                (a.note ?: "").compareTo(b.note ?: "")
-            }
-    }
-}
+typealias TandoorShoppingListEntryId=Int
 
 @Serializable
 data class TandoorShoppingListEntry (
-    val id: Int,
+    val id: TandoorShoppingListEntryId,
     val list_recipe: ShopppingListRecipeId?,
-    @Transient
-    var recipe: TandoorRecipe? = null,
     val food: TandoorFood,
     val unit: TandoorUnit?,
-    val amount: String,
-    val order: Int,
-    val checked: Boolean
+    val ingredient: Int?,
+    //val ingredient_note: String?, //TODO: Field 'ingredient_note' is required for type with serial name 'biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry', but it was missing
+    //@Transient
+    //var recipe: TandoorRecipe? = null,
+    val amount: Float?,
+    val order: Int?,
+    val checked: Boolean,
+    val recipe_mealplan: TandoorRecipeMealplan?,
+    val created_by: TandoorUser,
+    val created_at: String,
+    val completed_at: String?
+    //delay_until
 ) {
     val amountBigDecimal
-        get() = BigDecimal(amount)
+        get() = amount?.toBigDecimal()
 
     class SortById(val inverted: Boolean = false) : Comparator<TandoorShoppingListEntry> {
         override fun compare(a: TandoorShoppingListEntry, b: TandoorShoppingListEntry) =
@@ -80,8 +45,27 @@ data class TandoorShoppingListEntry (
             }
     }
 
-    class SortByCategory(val inverted: Boolean = false) : Comparator<TandoorShoppingListEntry> {
+    class SortByCategory(private val supermarket: TandoorSupermarket?,
+                         val inverted: Boolean = false) : Comparator<TandoorShoppingListEntry> {
+
+        private fun getOrder(food: TandoorFood): Int {
+            val lookFor = food.supermarket_category ?: return -1
+            val categories = supermarket?.category_to_supermarket ?: return -1
+            return categories.find { a: TandoorSupermarketToCategory ->
+                    a.category.id == lookFor.id
+            }?.order ?: -1
+        }
+
         override fun compare(a: TandoorShoppingListEntry, b: TandoorShoppingListEntry) =
+            supermarket ?.let {
+                // sort by order of categories in market
+                if (inverted) {
+                    getOrder(b.food).compareTo(getOrder(a.food))
+                } else {
+                    getOrder(a.food).compareTo(getOrder(b.food))
+                }
+            } ?:
+            // sort by category name
             if (inverted) {
                 b.food.safeCategoryName.compareTo(a.food.safeCategoryName)
             } else {

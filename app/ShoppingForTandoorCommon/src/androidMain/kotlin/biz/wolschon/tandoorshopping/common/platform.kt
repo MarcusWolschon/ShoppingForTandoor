@@ -29,6 +29,11 @@ actual val NetworkDispatcher: CoroutineDispatcher = Dispatchers.IO
 
 actual data class PlatformContext(val context: Context)
 
+actual val platformJson = Json(KotlinxSerializer.DefaultJson) {
+    isLenient = true
+    ignoreUnknownKeys = true
+}
+
 @Composable
 actual fun getPlatformContext() =  PlatformContext(
     context = LocalContext.current
@@ -46,16 +51,12 @@ actual class DatabaseDriverFactory(private val context: Context) {
 }
 
 
-
 actual fun getHttpClient(): HttpClient =
     HttpClient(CIO) {
         install(Auth) {
         }
         install(JsonFeature) {
-            serializer = KotlinxSerializer(Json(KotlinxSerializer.DefaultJson) {
-                isLenient = true
-                ignoreUnknownKeys = true
-            })
+            serializer = KotlinxSerializer(platformJson)
         }
         install(Logging) {
             level = LogLevel.HEADERS

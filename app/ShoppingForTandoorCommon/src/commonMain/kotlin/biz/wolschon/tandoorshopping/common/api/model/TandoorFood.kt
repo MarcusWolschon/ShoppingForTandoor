@@ -1,3 +1,5 @@
+@file:Suppress("PLUGIN_IS_NOT_ENABLED")
+
 package biz.wolschon.tandoorshopping.common.api.model
 
 import kotlinx.serialization.Serializable
@@ -13,15 +15,20 @@ data class TandoorPagedFoodList (
     val results: List<TandoorFood>
 )
 
+typealias TandoorFoodId=Int
+
 @Serializable
 data class TandoorFood (
-    val id: Int,
+    val id: TandoorFoodId,
     val name: String,
     val description: String?,
-    val ignore_shopping: Boolean,
-    val supermarket_category: TandoorSupermarketCategory?
+    //recipe
+    val food_onhand: Boolean,
+    val supermarket_category: TandoorSupermarketCategory?,
     //"parent": null,
     //"numchild": 0
+    //inherit_fields: List<?>
+    val full_name: String
 ) {
 
     val safeCategoryName

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import com.squareup.sqldelight.db.SqlDriver
 import io.ktor.client.*
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.serialization.json.Json
 
 expect fun getPlatformName(): String
 
@@ -21,3 +22,6 @@ expect class DatabaseDriverFactory {
 }
 
 expect fun getHttpClient(): HttpClient
+
+
+expect val platformJson: Json
