@@ -30,6 +30,8 @@ import kotlinx.coroutines.launch
 class ShoppingListPage : Page() {
     override val title = "Shopping List"
 
+    override val relativeUrl = "/list/shopping-list/"
+
     fun updateFoodEntry(
         model: Model,
         foodItem: TandoorShoppingListEntry,

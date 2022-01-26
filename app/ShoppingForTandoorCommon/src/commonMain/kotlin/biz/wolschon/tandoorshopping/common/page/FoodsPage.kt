@@ -9,6 +9,8 @@ class FoodsPage: Page() {
 
     override val title = "All Foods"
 
+    override val relativeUrl = "/list/food/"
+
     @Composable
     override fun compose(model: Model,
                          platformContext: PlatformContext,

@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import biz.wolschon.tandoorshopping.common.model.Model
@@ -16,11 +17,13 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-private enum class TopLevelPages(val title: String, val page: Page) {
-    LIST("Shopping List", ShoppingListPage()),
-    FOODS("Foods", FoodsPage()),
-    SHOPS("Shops", ShopsPage()),
-    SETTINGS("⚙ Settings", SettingsPage())
+private enum class TopLevelPages(val title: String,
+                                 val page: Page,
+                                 val icon: @Composable (() -> Painter)? = null) {
+    LIST("Shopping List", ShoppingListPage(), icon_list),
+    FOODS("Foods", FoodsPage(), icon_food),
+    SHOPS("Shops", ShopsPage(), icon_shop),
+    SETTINGS("Settings", SettingsPage(), icon_settings)
 }
 
 @Composable
@@ -96,12 +99,19 @@ fun App(model: Model) {
             TopLevelPages.values().forEach { menuEntry ->
                 Button(
                     enabled = currentPage != menuEntry.page,
-                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                    modifier = Modifier.padding(16.dp).width(192.dp),
                     onClick = {
                         Log.i("App", "[${menuEntry.title}] tapped")
                         currentPage = menuEntry.page
                         scope.launch { scaffoldState.drawerState.close() }
                     }) {
+                    menuEntry.icon?.let { icon ->
+                        Icon(
+                            painter = icon.invoke(),
+                            contentDescription = menuEntry.title,
+                            modifier = Modifier.padding(5.dp)
+                        )
+                    }
                     Text(menuEntry.title)
                 }
             }
@@ -172,7 +182,26 @@ fun App(model: Model) {
                     },
                     Modifier.height(48.dp).width(48.dp)
                 ) {
-                    Text("<")
+                    Icon(
+                        painter = icon_menu.invoke(),
+                        contentDescription = "open navigation drawer"
+                    )
+                }
+
+                if (model.settings.baseUrl?.isNotBlank() == true) {
+                    currentPage.relativeUrl?.let {
+                        Button(
+                            onClick = {
+                                openBrowser(platformContext, model.settings.baseUrl + it)
+                            },
+                            Modifier.height(48.dp).width(48.dp)
+                        ) {
+                            Icon(
+                                painter = icon_web.invoke(),
+                                contentDescription = "open in web browser"
+                            )
+                        }
+                    }
                 }
 
                 if (isRefreshing) {
