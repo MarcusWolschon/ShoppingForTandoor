@@ -125,14 +125,33 @@ fun App(model: Model, version: String) {
         },
         floatingActionButton = {
             if (!model.settings.settingsIncomplete && !isRefreshing) {
+                FloatingActionButton(
+                    onClick = {
+                        Log.i("App", "[refresh] tapped")
+                        refresh.invoke()
+                    }
+                ) {
+                    Icon(
+                        painter = icon_refresh.invoke(),
+                        contentDescription = "refresh",
+                        modifier = Modifier.padding(5.dp)
+                    )
+                }/*
                 ExtendedFloatingActionButton(
                     text = { Text("\uD83D\uDDD8 Refresh") },
+                    icon = {
+                        Icon(
+                            painter = icon_refresh.invoke(),
+                            contentDescription = "refresh",
+                            modifier = Modifier.padding(5.dp)
+                        )
+                    },
                     onClick = {
                         Log.i("App", "[refresh] tapped")
                         refresh.invoke()
                     }
 
-                )
+                )*/
             }
         }
 

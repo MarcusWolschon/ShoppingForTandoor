@@ -211,27 +211,31 @@ fun shoppingListView(entries: List<TandoorShoppingListEntry>,
     // compose the UI elements
 
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
-        items(items.size + 1) { index ->
-            when (index) {
-                0 -> shoppingListItemHeader()
-                else -> {
-                    val item = items[index - 1]
-                    if (lastSorting is SortByRecipe) {
-                        if (index == 1 || items[index - 2].list_recipe != item.list_recipe) {
-                            shoppingListRecipe(item.list_recipe, item.recipe_mealplan, onRecipeClicked)
-                        }
-                    }
-                    val category = item.food.supermarket_category
-                    val greyed = category != null &&
-                            currentSupermarket != null &&
-                            !currentSupermarket.hasCategory(category)
-                    if (index == 1 || items[index - 2].food.safeCategoryId != item.food.safeCategoryId) {
-                        item.food.supermarket_category?.let { shoppingListCategory(it, showGreyed = greyed) }
-                    }
-                    shoppingListItemView(item, onFoodCheckedChanged, showGreyed = greyed)
+        item {
+            shoppingListItemHeader()
+        }
+        items(items.size) { index ->
+            val item = items[index]
+            if (lastSorting is SortByRecipe) {
+                if (index == 0 || items[index - 1].list_recipe != item.list_recipe) {
+                    shoppingListRecipe(item.list_recipe, item.recipe_mealplan, onRecipeClicked)
                 }
             }
+            val category = item.food.supermarket_category
+            val greyed = category != null &&
+                    currentSupermarket != null &&
+                    !currentSupermarket.hasCategory(category)
+            if (index == 0 || items[index - 1].food.safeCategoryId != item.food.safeCategoryId) {
+                item.food.supermarket_category?.let { shoppingListCategory(it, showGreyed = greyed) }
+            }
+            shoppingListItemView(item, onFoodCheckedChanged, showGreyed = greyed)
+        }
 
+        item {
+            // don't obscure the last list entry by the Floating Action Button
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Spacer(Modifier.height(64.dp))
+            }
         }
 
     }

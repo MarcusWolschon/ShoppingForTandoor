@@ -103,6 +103,7 @@ fun foodListView(
         onFoodSelected: (TandoorFood) -> Unit
     ) {
         Row(modifier = Modifier.fillMaxWidth()
+            .height(48.dp)
             .clickable { onFoodSelected.invoke(foodEntry) }) {
             if (showID) {
                 Text("${foodEntry.id}", idModifier)
@@ -129,26 +130,32 @@ fun foodListView(
     // compose the UI elements
 
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
-        items(items.size + 2) { index ->
-            when (index) {
-                0 -> {
-                    TextField(
-                        value = sarchFor,
-                        label = { Text("Search") },
-                        onValueChange = { sarchFor = it },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-                1 -> foodListItemHeader()
-                else -> {
-                    val item = items[index - 2]
-                    if (index == 2 || items[index - 3].safeCategoryId != item.safeCategoryId) {
+        item {
+                TextField(
+                    value = sarchFor,
+                    label = { Text("Search") },
+                    onValueChange = { sarchFor = it },
+                    modifier = Modifier.fillMaxWidth()
+                )
+        }
+        item {
+            foodListItemHeader()
+        }
+
+        items(items.size) { index ->
+                    val item = items[index]
+                    if (index == 0 || items[index - 1].safeCategoryId != item.safeCategoryId) {
                         item.supermarket_category?.let { foodListCategory(it) }
                     }
                     foodListItemView(item, onFoodSelected)
-                }
-            }
+        }
 
+
+        item {
+            // don't obscure the last list entry by the Floating Action Button
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Spacer(Modifier.height(64.dp))
+            }
         }
 
     }

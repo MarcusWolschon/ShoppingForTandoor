@@ -9,3 +9,4 @@ expect val icon_food: @Composable () -> Painter
 expect val icon_settings: @Composable () -> Painter
 expect val icon_web: @Composable () -> Painter
 expect val icon_menu: @Composable () -> Painter
+expect val icon_refresh: @Composable () -> Painter
