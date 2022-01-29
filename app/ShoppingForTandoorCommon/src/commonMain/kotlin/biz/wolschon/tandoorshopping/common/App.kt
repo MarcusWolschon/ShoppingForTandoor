@@ -177,24 +177,13 @@ fun App(model: Model, version: String) {
                     )
                 }
 
-                if (model.settings.baseUrl?.isNotBlank() == true) {
-                    currentPage.relativeUrl?.let {
-                        Button(
-                            onClick = {
-                                openBrowser(platformContext, model.settings.baseUrl + it)
-                            },
-                            Modifier.height(48.dp).width(48.dp)
-                        ) {
-                            Icon(
-                                painter = icon_web.invoke(),
-                                contentDescription = "open in web browser"
-                            )
-                        }
-                    }
-                }
-
                 if (isRefreshing) {
-                    Row(Modifier.background(Color.Yellow).fillMaxWidth().height(48.dp),
+                    Row(
+                        Modifier
+                            .background(Color.Yellow)
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .weight(1f),
                     ) {
                         Text(text = "loading...",
                             color = Color.Black,
@@ -204,13 +193,39 @@ fun App(model: Model, version: String) {
                         )
                     }
                 } else {
-                    Text(text = currentPage.title,
-                        color = Color.Black,
-                        fontSize = 20.sp,
-                        modifier = Modifier
-                            .align(CenterVertically)
-                            .padding(horizontal = 16.dp, vertical = 0.dp)
-                    )
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .weight(1f),
+                    ) {
+                        Text(
+                            text = currentPage.title,
+                            color = Color.Black,
+                            fontSize = 20.sp,
+                            modifier = Modifier
+                                .align(CenterVertically)
+                                .padding(horizontal = 16.dp, vertical = 0.dp)
+                        )
+                    }
+                }
+
+
+
+                if (model.settings.baseUrl?.isNotBlank() == true) {
+                    currentPage.relativeUrl?.let {
+                        Button(
+                            onClick = {
+                                openBrowser(platformContext, model.settings.baseUrl + it)
+                            },
+                            Modifier.height(48.dp).width(48.dp).weight(0.2f)
+                        ) {
+                            Icon(
+                                painter = icon_web.invoke(),
+                                contentDescription = "open in web browser"
+                            )
+                        }
+                    }
                 }
             }
 
