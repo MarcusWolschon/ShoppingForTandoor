@@ -17,10 +17,7 @@ import androidx.compose.ui.unit.dp
 import biz.wolschon.tandoorshopping.common.Log
 import biz.wolschon.tandoorshopping.common.NetworkDispatcher
 import biz.wolschon.tandoorshopping.common.PlatformContext
-import biz.wolschon.tandoorshopping.common.api.model.ShopppingListRecipeId
-import biz.wolschon.tandoorshopping.common.api.model.TandoorRecipeMealplan
-import biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry
-import biz.wolschon.tandoorshopping.common.api.model.TandoorSupermarket
+import biz.wolschon.tandoorshopping.common.api.model.*
 import biz.wolschon.tandoorshopping.common.model.Model
 import biz.wolschon.tandoorshopping.common.openBrowser
 import biz.wolschon.tandoorshopping.common.view.shoppingListView
@@ -53,7 +50,7 @@ class ShoppingListPage : Page() {
     private fun shopSelection(
         model: Model,
         currentSupermarket: TandoorSupermarket?,
-        onSupermarketChanged: (TandoorSupermarket?) -> Unit
+        onSupermarketChanged: (TandoorSupermarketId?) -> Unit
     ) {
         val allSupermarkets = model.databaseModel.getCachedSupermarkets()
         var isExpanded by remember { mutableStateOf(false) }
@@ -91,7 +88,7 @@ class ShoppingListPage : Page() {
                         RadioButton(selected = (currentSupermarket?.id == market.id),
                             onClick = {
                                 if (currentSupermarket?.id != market.id) {
-                                    onSupermarketChanged(market)
+                                    onSupermarketChanged(market.id)
                                     isExpanded = false
                                 }
                             })
@@ -114,7 +111,11 @@ class ShoppingListPage : Page() {
         val shoppingList = model.databaseModel.getLiveShoppingListEntries()
             .collectAsState(initial = model.databaseModel.getCachedShoppingListEntries())
             .value
-        var currentSupermarket by remember { mutableStateOf<TandoorSupermarket?>(null) }
+        var currentSupermarketId by remember { mutableStateOf(model.settings.currentSupermarketID) }
+        val currentSupermarket = currentSupermarketId?.let { model.databaseModel.getCachedSupermarkets().find { market -> market.id == it } }
+        if (currentSupermarket == null && currentSupermarketId != null) {
+            currentSupermarketId = null // prevent a no longer existing supermarket to be current
+        }
 
 
         Row {
@@ -123,7 +124,8 @@ class ShoppingListPage : Page() {
         }
 
         shopSelection(model, currentSupermarket) { selection ->
-            currentSupermarket = selection
+            currentSupermarketId = selection
+            model.settings.currentSupermarketID = selection
         }
 
         shoppingListView(

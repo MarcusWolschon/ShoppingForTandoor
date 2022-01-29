@@ -2,6 +2,7 @@ package biz.wolschon.tandoorshopping.common.model
 
 import biz.wolschon.tandoorshopping.common.DBDispatcher
 import biz.wolschon.tandoorshopping.common.Log
+import biz.wolschon.tandoorshopping.common.api.model.TandoorSupermarketId
 import biz.wolschon.tandoorshopping.common.model.db.SettingsQueries
 import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToOneOrNull
@@ -35,4 +36,9 @@ class SettingsModel(private val settingsQueries: SettingsQueries) {
     var apiToken: String?
         get() = settingsQueries.getSetting("apiToken").executeAsOneOrNull()?.value
         set(value) = settingsQueries.replaceSetting("apiToken", value)
+
+    var currentSupermarketID: TandoorSupermarketId?
+        get() = settingsQueries.getSetting("currentSupermarketID").executeAsOneOrNull()?.value?.toInt()
+        set(value) = settingsQueries.replaceSetting("currentSupermarketID", value.toString())
+
 }
