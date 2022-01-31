@@ -29,6 +29,11 @@ actual class PlatformContext
 @Composable
 actual fun getPlatformContext() =  PlatformContext()
 
+@Composable
+actual fun addBackButtonHandler(handler: () -> Unit) {
+    //do nothing. There is no BACK button on a desktop PC
+}
+
 actual val platformJson = Json(KotlinxSerializer.DefaultJson) {
     isLenient = true
     ignoreUnknownKeys = true

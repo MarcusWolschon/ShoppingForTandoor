@@ -7,7 +7,9 @@ import biz.wolschon.tandoorshopping.common.model.db.AppDatabase
 import biz.wolschon.tandoorshopping.common.platformJson
 import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToList
+import com.squareup.sqldelight.runtime.coroutines.mapToOneOrNull
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
@@ -122,6 +124,14 @@ class DatabaseModel(dbDriver: DatabaseDriverFactory) {
         }
 
     @OptIn(ExperimentalSerializationApi::class)
+    fun getLiveFood(id: TandoorFoodId): Flow<TandoorFood?> = database.foodsQueries
+        .getFood(id.toLong()).asFlow()
+        .mapToOneOrNull(Dispatchers.IO)
+        .map { entry ->
+            entry?.let { platformJson.decodeFromString(entry) }
+        }
+
+    @OptIn(ExperimentalSerializationApi::class)
     fun saveFoods(list: Collection<TandoorFood>) {
         cachedFoods.clear()
         list.forEach { cachedFoods[it.id] = it }
@@ -133,6 +143,16 @@ class DatabaseModel(dbDriver: DatabaseDriverFactory) {
                 platformJson.encodeToString(it)
             )
         }
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun saveFood(food: TandoorFood) {
+        cachedFoods[food.id] = food
+        database.foodsQueries.replaceFood(
+            id = food.id.toLong(),
+            name = food.name,
+            json = platformJson.encodeToString(food)
+        )
     }
     // endregion
 }

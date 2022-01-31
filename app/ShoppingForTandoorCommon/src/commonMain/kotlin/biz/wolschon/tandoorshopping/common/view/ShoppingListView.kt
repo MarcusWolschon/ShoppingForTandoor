@@ -4,9 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.Button
-import androidx.compose.material.Checkbox
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -136,14 +134,25 @@ fun shoppingListView(entries: List<TandoorShoppingListEntry>,
     @Composable
     fun shoppingListCategory(foodCategory: TandoorSupermarketCategory,
                              showGreyed: Boolean) {
-        Row(modifier = Modifier.fillMaxWidth()) {
+        val bgColor = if (showGreyed) {
+            MaterialTheme.colors.secondary.copy(alpha = ContentAlpha.disabled)
+        } else  {
+            MaterialTheme.colors.secondary
+        }
+
+        val textColor = if (showGreyed) {
+            MaterialTheme.colors.onSecondary.copy(alpha = ContentAlpha.disabled)
+        } else  {
+            MaterialTheme.colors.onSecondary
+        }
+
+        Row(modifier = Modifier.fillMaxWidth()
+            .background(color = bgColor)
+        ) {
             if (showID) {
                 Spacer(idModifier)
             }
             Spacer(checkedModifier)
-
-
-            val textColor = if (showGreyed) Color.Gray else  Color.Black
 
             Text(
                 text = if (showGreyed) "[MISSING] ${foodCategory.name}" else foodCategory.name,
@@ -161,6 +170,13 @@ fun shoppingListView(entries: List<TandoorShoppingListEntry>,
         onFoodCheckedChanged: (TandoorShoppingListEntry, Boolean) -> Unit,
         showGreyed: Boolean
     ) {
+
+        val textColor = if (showGreyed) {
+            MaterialTheme.colors.onBackground.copy(alpha = ContentAlpha.disabled)
+        } else  {
+            MaterialTheme.colors.onBackground
+        }
+
         Row(modifier = Modifier.fillMaxWidth()) {
             if (showID) {
                 Text("${foodEntry.id}", idModifier)
@@ -170,12 +186,6 @@ fun shoppingListView(entries: List<TandoorShoppingListEntry>,
                 onCheckedChange = { onFoodCheckedChanged(foodEntry, it) },
                 modifier = checkedModifier.align(Alignment.CenterVertically)
             )
-            /*Text(
-                foodEntry.food.supermarket_category.name,
-                categoryModifier.align(Alignment.CenterVertically),
-            )*/
-
-            val textColor = if (showGreyed) Color.Gray else  Color.Black
 
             Text(
                 formatAmount(foodEntry.amountBigDecimal),

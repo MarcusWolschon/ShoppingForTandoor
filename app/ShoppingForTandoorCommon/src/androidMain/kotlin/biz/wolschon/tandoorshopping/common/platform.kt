@@ -3,6 +3,7 @@ package biz.wolschon.tandoorshopping.common
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import biz.wolschon.tandoorshopping.common.model.db.AppDatabase
@@ -38,6 +39,11 @@ actual val platformJson = Json(KotlinxSerializer.DefaultJson) {
 actual fun getPlatformContext() =  PlatformContext(
     context = LocalContext.current
 )
+
+@Composable
+actual fun addBackButtonHandler(handler: () -> Unit) {
+    BackHandler { handler() }
+}
 
 actual fun openBrowser(platformContext: PlatformContext, url: String) {
     val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))

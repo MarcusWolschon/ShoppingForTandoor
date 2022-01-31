@@ -21,14 +21,15 @@ typealias TandoorFoodId=Int
 data class TandoorFood (
     val id: TandoorFoodId,
     val name: String,
+    val full_name: String,
     val description: String?,
     //recipe
     val food_onhand: Boolean,
+    val ignore_shopping: Boolean = false,
     val supermarket_category: TandoorSupermarketCategory?,
-    //"parent": null,
-    //"numchild": 0
-    //inherit_fields: List<?>
-    val full_name: String
+    val parent: TandoorFoodId? = null,
+    val numchild: Int = 0,
+    val inherit_fields: List<InheritedField>? = listOf()
 ) {
 
     val safeCategoryName
@@ -72,4 +73,15 @@ data class TandoorFood (
                 a.name.compareTo(b.name)
             }
     }
+
+
+    @Suppress("unused")
+    enum class InheritableField {supermarket_category, ignore_shopping}
+
+    @Serializable
+    data class InheritedField (
+        val id: Int,
+        val name: String,
+        val field: InheritableField
+    )
 }

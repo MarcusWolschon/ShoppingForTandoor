@@ -41,4 +41,11 @@ class SettingsModel(private val settingsQueries: SettingsQueries) {
         get() = settingsQueries.getSetting("currentSupermarketID").executeAsOneOrNull()?.value?.toInt()
         set(value) = settingsQueries.replaceSetting("currentSupermarketID", value.toString())
 
+    var showCheckedShoppingEntries: Boolean?
+        get() = settingsQueries.getSetting("shopping.checked-visible").executeAsOneOrNull()?.value?.toBoolean()
+        set(value) = settingsQueries.replaceSetting("shopping.checked-visible", value.toString())
+
+    var showOnlyOnHandFoods: Boolean?
+        get() = settingsQueries.getSetting("foods.onHandOnly").executeAsOneOrNull()?.value?.toBoolean()
+        set(value) = settingsQueries.replaceSetting("foods.onHandOnly", value.toString())
 }

@@ -1,11 +1,10 @@
 package biz.wolschon.tandoorshopping.common.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.Button
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -86,11 +85,13 @@ fun foodListView(
      */
     @Composable
     fun foodListCategory(foodCategory: TandoorSupermarketCategory) {
-        Row(modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.fillMaxWidth()
+            .background(color = MaterialTheme.colors.secondary)
+        ) {
             if (showID) {
                 Spacer(idModifier)
             }
-            Text(foodCategory.name)
+            Text(foodCategory.name, color = MaterialTheme.colors.onSecondary)
         }
     }
 

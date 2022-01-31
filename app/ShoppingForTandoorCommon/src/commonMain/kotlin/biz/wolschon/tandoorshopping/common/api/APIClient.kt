@@ -18,6 +18,13 @@ class APIClient {
             header("Authorization", "Token $accessToken")
         }
 
+    suspend fun fetchFood(baseurl: String, accessToken: String, id: TandoorFoodId) =
+        getHttpClient().get<TandoorFood> {
+            url("$baseurl/food/$id")
+            contentType(ContentType.Application.Json)
+            header("Authorization", "Token $accessToken")
+        }
+
     suspend fun fetchMoreFoods(fullyUrl: String, accessToken: String) =
         getHttpClient().get<TandoorPagedFoodList> {
             url(fullyUrl)
@@ -62,15 +69,37 @@ class APIClient {
     }
 
     @Serializable
-    data class ShoppingListEntryUpdate(val id: Int, val checked: Boolean)
+    data class ShoppingListEntryUpdate(val id: TandoorShoppingListEntryId, val checked: Boolean)
 
-    suspend fun updateShoppingListItemChecked(baseurl: String, accessToken: String, entryId: Int, checked: Boolean) {
+    suspend fun updateShoppingListItemChecked(baseurl: String,
+                                              accessToken: String,
+                                              entryId: TandoorShoppingListEntryId,
+                                              checked: Boolean) {
         try {
             getHttpClient().patch<TandoorShoppingListEntry> {
                 url("$baseurl/shopping-list-entry/$entryId/")
                 contentType(ContentType.Application.Json)
                 header("Authorization", "Token $accessToken")
                 body = ShoppingListEntryUpdate(entryId, checked)
+            }
+        } catch (x: RedirectResponseException) {
+            //ignored
+        }
+    }
+
+    @Serializable
+    data class FoodEntryOnHandUpdate(val id: TandoorFoodId, val food_onhand: Boolean)
+
+    suspend fun updateFoodItemOnHand(baseurl: String,
+                                     accessToken: String,
+                                     entryId: TandoorFoodId,
+                                     omHand: Boolean) {
+        try {
+            getHttpClient().patch<TandoorFood> {
+                url("$baseurl/food/$entryId/")
+                contentType(ContentType.Application.Json)
+                header("Authorization", "Token $accessToken")
+                body = FoodEntryOnHandUpdate(entryId, omHand)
             }
         } catch (x: RedirectResponseException) {
             //ignored

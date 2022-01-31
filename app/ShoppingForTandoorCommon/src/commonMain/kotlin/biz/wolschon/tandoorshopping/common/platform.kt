@@ -12,6 +12,9 @@ expect class PlatformContext
 @Composable
 expect fun getPlatformContext():  PlatformContext
 
+@Composable
+expect fun addBackButtonHandler(handler: () -> Unit)
+
 expect fun openBrowser(platformContext: PlatformContext, url: String)
 
 expect val DBDispatcher : CoroutineDispatcher

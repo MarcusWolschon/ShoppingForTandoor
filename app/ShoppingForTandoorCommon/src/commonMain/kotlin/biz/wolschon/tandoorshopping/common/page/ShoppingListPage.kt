@@ -106,7 +106,7 @@ class ShoppingListPage : Page() {
         navigateTo: (Page) -> Unit
     ) {
         Log.d("ShoppingListPage", "compose() called")
-        var showChecked by remember { mutableStateOf(false) }
+        var showChecked by remember { mutableStateOf(model.settings.showCheckedShoppingEntries ?: false) }
         val scope = rememberCoroutineScope()
         val shoppingList = model.databaseModel.getLiveShoppingListEntries()
             .collectAsState(initial = model.databaseModel.getCachedShoppingListEntries())
@@ -119,7 +119,10 @@ class ShoppingListPage : Page() {
 
 
         Row {
-            Checkbox(checked = showChecked, onCheckedChange = { checked -> showChecked = checked })
+            Checkbox(checked = showChecked, onCheckedChange = { checked ->
+                showChecked = checked
+                model.settings.showCheckedShoppingEntries = checked
+            })
             Text("show checked foods", Modifier.align(Alignment.CenterVertically))
         }
 

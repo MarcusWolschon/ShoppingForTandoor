@@ -78,6 +78,26 @@ class Model(dbDriver: DatabaseDriverFactory) {
     }
 
     @OptIn(ExperimentalSerializationApi::class)
+    suspend fun fetchFood(id: TandoorFoodId): TandoorFood? {
+        val apiUrl = settings.apiUrl ?: return null
+        val apiToken = settings.apiToken ?: return null
+        try {
+            return coroutineScope {
+                api.fetchFood(apiUrl, apiToken, id).also {
+                    databaseModel.saveFood(it)
+                }
+            }
+        } catch (x: UnresolvedAddressException) {
+            Log.e("Model", "fetchFood() error", x)
+            errorMessage.value = "Server address unresolvable"
+        } catch (x: ClientRequestException) {
+            Log.e("Model", "fetchFood() error", x)
+            handleClientRequestException(x)
+        }
+        return null
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
     suspend fun fetchSupermarkets(): Map<TandoorSupermarketId, TandoorSupermarket>? {
         val apiUrl = settings.apiUrl ?: return null
         val apiToken = settings.apiToken ?: return null
@@ -196,12 +216,22 @@ class Model(dbDriver: DatabaseDriverFactory) {
         return null
     }
 
-    suspend fun updateShoppingListItemChecked(id: Int, checked: Boolean) {
+    suspend fun updateShoppingListItemChecked(id: TandoorShoppingListEntryId, checked: Boolean) {
         val apiUrl = settings.apiUrl ?: return
         val apiToken = settings.apiToken ?: return
         return withContext(errorHandler) {
             coroutineScope {
                 api.updateShoppingListItemChecked(apiUrl, apiToken, id, checked)
+            }
+        }
+    }
+
+    suspend fun updateFoodItemOnHand(id: TandoorFoodId, omHand: Boolean) {
+        val apiUrl = settings.apiUrl ?: return
+        val apiToken = settings.apiToken ?: return
+        return withContext(errorHandler) {
+            coroutineScope {
+                api.updateFoodItemOnHand(apiUrl, apiToken, id, omHand)
             }
         }
     }

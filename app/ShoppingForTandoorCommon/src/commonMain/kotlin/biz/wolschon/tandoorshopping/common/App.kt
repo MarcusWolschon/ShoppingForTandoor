@@ -31,8 +31,13 @@ fun App(model: Model, version: String) {
     // state
     val platformContext = getPlatformContext()
     val errorMessage = model.errorMessage.collectAsState()
-    var isRefreshing by remember { mutableStateOf(false) }
+    var isRefreshingMessage by remember { mutableStateOf<String?>(null) }
     var currentPage by remember { mutableStateOf(TopLevelPages.LIST.page) }
+    addBackButtonHandler{
+        currentPage.previous?.let {
+            currentPage = it
+        }
+    }
 
     val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
@@ -51,24 +56,27 @@ fun App(model: Model, version: String) {
     }
 
     val refresh = {
-        isRefreshing = true
+        isRefreshingMessage = "Refreshing..."
         GlobalScope.launch(NetworkDispatcher + errorHandler) {
             Log.i("App", "refresh starting")
             try {
+                isRefreshingMessage = "Refreshing shopping list..."
                 model.fetchShoppingList()
                 if (model.errorMessage.value == null) {
+                    isRefreshingMessage = "Refreshing foods..."
                     Log.i("App", "refresh - fetchFoods starting")
                     model.fetchFoods()
                     Log.i("App", "refresh done")
                 }
                 if (model.errorMessage.value == null) {
+                    isRefreshingMessage = "Refreshing shops..."
                     Log.i("App", "refresh - fetchSupermarkets starting")
                     model.fetchSupermarkets()
                     Log.i("App", "refresh done")
                 }
             } finally {
                 Log.i("App", "refresh finally")
-                isRefreshing = false
+                isRefreshingMessage = null
             }
         }
     }
@@ -77,7 +85,7 @@ fun App(model: Model, version: String) {
         Log.i("App", "settings incomplete, forcing settings page")
         currentPage = TopLevelPages.SETTINGS.page
     } else if (model.databaseModel.getCachedShoppingListEntries().isEmpty() && errorMessage.value == null) {
-        if (model.errorMessage.value == null && !isRefreshing) {
+        if (model.errorMessage.value == null && isRefreshingMessage == null) {
             Log.i("App", "initial refresh")
             refresh.invoke()
         }
@@ -124,7 +132,7 @@ fun App(model: Model, version: String) {
             }
         },
         floatingActionButton = {
-            if (!model.settings.settingsIncomplete && !isRefreshing) {
+            if (!model.settings.settingsIncomplete && isRefreshingMessage == null) {
                 FloatingActionButton(
                     onClick = {
                         Log.i("App", "[refresh] tapped")
@@ -177,38 +185,40 @@ fun App(model: Model, version: String) {
                     )
                 }
 
-                if (isRefreshing) {
-                    Row(
-                        Modifier
-                            .background(Color.Yellow)
-                            .fillMaxWidth()
-                            .height(48.dp)
-                            .weight(1f),
-                    ) {
-                        Text(text = "loading...",
-                            color = Color.Black,
-                            modifier = Modifier
-                                .align(CenterVertically)
-                                .padding(horizontal = 16.dp, vertical = 0.dp)
-                        )
+                val message = isRefreshingMessage.takeIf { !it.isNullOrBlank() }
+                if (message != null) {
+                        Row(
+                            Modifier
+                                .background(Color.Yellow)
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .weight(1f),
+                        ) {
+                            Text(
+                                text = message,
+                                color = Color.Black,
+                                modifier = Modifier
+                                    .align(CenterVertically)
+                                    .padding(horizontal = 16.dp, vertical = 0.dp)
+                            )
+                        }
+                    } else {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .weight(1f),
+                        ) {
+                            Text(
+                                text = currentPage.title,
+                                color = Color.Black,
+                                fontSize = 20.sp,
+                                modifier = Modifier
+                                    .align(CenterVertically)
+                                    .padding(horizontal = 16.dp, vertical = 0.dp)
+                            )
+                        }
                     }
-                } else {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                            .weight(1f),
-                    ) {
-                        Text(
-                            text = currentPage.title,
-                            color = Color.Black,
-                            fontSize = 20.sp,
-                            modifier = Modifier
-                                .align(CenterVertically)
-                                .padding(horizontal = 16.dp, vertical = 0.dp)
-                        )
-                    }
-                }
 
 
 
@@ -232,8 +242,8 @@ fun App(model: Model, version: String) {
             // error messages below level bar
 
             errorMessage.value?.let { error ->
-                Row(Modifier.background(Color.Red).fillMaxWidth()) {
-                    Text(text = error, color = Color.White, maxLines = 3)
+                Row(Modifier.background(MaterialTheme.colors.error).fillMaxWidth()) {
+                    Text(text = error, color = MaterialTheme.colors.onError, maxLines = 3)
                 }
             }
 
@@ -241,6 +251,7 @@ fun App(model: Model, version: String) {
             //TODO Column(Modifier.verticalScroll(contentAreaScrollState, true)) {
 
             currentPage.compose(model, platformContext) { destination ->
+                destination.previous = currentPage
                 currentPage = destination
             }
         }
