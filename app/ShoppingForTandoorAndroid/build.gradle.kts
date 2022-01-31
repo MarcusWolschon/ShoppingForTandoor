@@ -28,7 +28,7 @@ dependencies {
 
     // Bugfix "Can only use lower 16 bits for requestCode"
     implementation("androidx.activity:activity-ktx:1.4.0")
-    implementation("androidx.fragment:fragment-ktx:1.4.0")
+    implementation("androidx.fragment:fragment-ktx:1.4.1")
 }
 
 // region Helper functions
