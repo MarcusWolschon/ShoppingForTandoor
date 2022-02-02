@@ -122,10 +122,25 @@ fun shoppingListView(entries: List<TandoorShoppingListEntry>,
             Text(
                 text = recipe?.name ?: recipeId?.let{ "Recipe #$recipeId" } ?: "No recipe",
                 textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
                 textDecoration = TextDecoration.Underline,
                 color = Color.Blue
             )
         }
+        recipe?.mealplan_note?.takeIf { it.isNotBlank() }?.let { note ->
+            Row(modifier = Modifier.fillMaxWidth()
+                .background(Color.LightGray)
+                .clickable {
+                    onRecipeClicked(recipeId, recipe)
+                }) {
+                Text(
+                    text = note,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+
     }
 
     /**
