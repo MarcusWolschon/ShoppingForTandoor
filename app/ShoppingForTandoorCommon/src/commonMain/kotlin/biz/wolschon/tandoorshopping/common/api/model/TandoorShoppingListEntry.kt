@@ -12,7 +12,7 @@ data class TandoorShoppingListEntry (
     val food: TandoorFood,
     val unit: TandoorUnit?,
     val ingredient: Int?,
-    //val ingredient_note: String?, //TODO: Field 'ingredient_note' is required for type with serial name 'biz.wolschon.tandoorshopping.common.api.model.TandoorShoppingListEntry', but it was missing
+    val ingredient_note: String? = null,
     //@Transient
     //var recipe: TandoorRecipe? = null,
     val amount: Float?,

@@ -177,38 +177,62 @@ fun shoppingListView(entries: List<TandoorShoppingListEntry>,
             MaterialTheme.colors.onBackground
         }
 
-        Row(modifier = Modifier.fillMaxWidth()) {
-            if (showID) {
-                Text("${foodEntry.id}", idModifier)
-            }
-            Checkbox(
-                checked = foodEntry.checked,
-                onCheckedChange = { onFoodCheckedChanged(foodEntry, it) },
-                modifier = checkedModifier.align(Alignment.CenterVertically)
-            )
+        @Composable
+        fun paintRow(
+            foodEntry: TandoorShoppingListEntry,
+            textColor: Color
+        ) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                if (showID) {
+                    Text("${foodEntry.id}", idModifier)
+                }
+                Checkbox(
+                    checked = foodEntry.checked,
+                    onCheckedChange = { onFoodCheckedChanged(foodEntry, it) },
+                    modifier = checkedModifier.align(Alignment.CenterVertically)
+                )
 
-            Text(
-                formatAmount(foodEntry.amountBigDecimal),
-                amountModifier.align(Alignment.CenterVertically),
-                textAlign = TextAlign.End,
-                color = textColor
-            )
-            Spacer(Modifier.width(1.dp))
-            Text(
-                foodEntry.unit?.name ?: "-",
-                unitModifier.align(Alignment.CenterVertically),
-                textAlign = TextAlign.Start,
-                color = textColor
-            )
-            Text(
-                text = foodEntry.food.name,
-                modifier = nameModifier
-                    .align(Alignment.CenterVertically)
-                    .clickable { onFoodSelected.invoke(foodEntry.food) },
-                textAlign = TextAlign.End,
-                textDecoration = TextDecoration.Underline,
-                color = Color.Blue
-            )
+                Text(
+                    formatAmount(foodEntry.amountBigDecimal),
+                    amountModifier.align(Alignment.CenterVertically),
+                    textAlign = TextAlign.End,
+                    color = textColor
+                )
+                Spacer(Modifier.width(1.dp))
+                Text(
+                    foodEntry.unit?.name ?: "-",
+                    unitModifier.align(Alignment.CenterVertically),
+                    textAlign = TextAlign.Start,
+                    color = textColor
+                )
+                Text(
+                    text = foodEntry.food.name,
+                    modifier = nameModifier
+                        .align(Alignment.CenterVertically)
+                        .clickable { onFoodSelected.invoke(foodEntry.food) },
+                    textAlign = TextAlign.End,
+                    textDecoration = TextDecoration.Underline,
+                    color = Color.Blue
+                )
+            }
+        }
+
+        val note = foodEntry.ingredient_note?.takeIf { it.isNotBlank() }
+        if (note == null) {
+            // single row
+            paintRow(foodEntry, textColor)
+        } else {
+            // double height row to make space for note
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Column (Modifier.fillMaxWidth().clickable { onFoodSelected.invoke(foodEntry.food) }) {
+                    paintRow(foodEntry, textColor)
+                    Text(
+                        text = note,
+                        modifier = nameModifier,
+                        textAlign = TextAlign.End
+                    )
+                }
+            }
         }
     }
 
