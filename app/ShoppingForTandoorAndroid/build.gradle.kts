@@ -5,8 +5,8 @@ plugins {
 }
 
 group = "biz.wolschon.tandoorshopping"
-version = "v0.1.2"
-val projectVersionCode = 12
+version = "v0.1.3"
+val projectVersionCode = 13
 
 
 dependencies {
